@@ -29,7 +29,7 @@ function easy_event_init() {
     Easy_Event_Database::maybe_upgrade();
 
     // GitHub-Updates: «dein-github-user» durch deinen GitHub-Benutzernamen ersetzen
-    new Easy_Event_Updater( __FILE__, 'dein-github-user', 'easy-event' );
+    new Easy_Event_Updater( __FILE__, 'tellysava-rgb', 'easy-event' );
 
     if ( is_admin() ) {
         Easy_Event_Admin::init();
