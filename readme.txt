@@ -1,0 +1,77 @@
+=== Easy Event ===
+Contributors: easyevent
+Tags: event, registration, tickets, presale, groups
+Requires at least: 5.8
+Tested up to: 7.0
+Requires PHP: 7.4
+Tested with PHP: 8.3.5
+Stable tag: 1.1.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+Einfaches Event-Anmeldesystem mit Vorverkauf, Gruppen und Ticketkontingenten.
+
+== Description ==
+
+Easy Event ermöglicht die Verwaltung von Veranstaltungen mit Ticketkontingenten, Gruppenaufteilung und Vorverkaufssteuerung.
+
+**Funktionen:**
+
+* Unbegrenzt viele Events gleichzeitig
+* Gruppenaufteilung mit Startzeiten und Gruppenleiter
+* Vorverkaufs-Countdown mit konfigurierbarem Datum und Uhrzeit
+* Ticketkontingente pro Gruppe mit Echtzeit-Verfügbarkeitsanzeige
+* Bestätigungs-E-Mail an Teilnehmer und Benachrichtigung an Admin
+* Frei konfigurierbarer E-Mail-Text mit Platzhaltern
+* CSV-Export aller Anmeldungen
+* Schutz gegen Race Conditions (MySQL-Transaktionen)
+* Schutz gegen Doppelabsenden und Bot-Spam (Honeypot)
+* Optionaler Duplikat-E-Mail-Schutz pro Event
+* Shortcode `[easy_event id="X"]` für beliebige Seiten
+
+== Installation ==
+
+1. Plugin-Ordner `easy-event` in `/wp-content/plugins/` hochladen
+2. Plugin im WordPress-Admin unter „Plugins" aktivieren
+3. Unter „Easy Event" ein neues Event erstellen
+4. Shortcode `[easy_event id="X"]` auf einer beliebigen Seite einfügen
+
+== Frequently Asked Questions ==
+
+= Wie binde ich ein Event auf einer Seite ein? =
+Mit dem Shortcode `[easy_event id="X"]`, wobei X die ID des Events ist. Die ID wird in der Events-Liste angezeigt.
+
+= Kann ich mehrere Events gleichzeitig betreiben? =
+Ja, beliebig viele Events können parallel aktiv sein. Jedes Event erhält einen eigenen Shortcode.
+
+= Was passiert wenn sich zwei Personen gleichzeitig anmelden? =
+Das Plugin verwendet MySQL-Transaktionen mit Row-Level-Locking. Überverkäufe sind dadurch ausgeschlossen.
+
+= Kann dieselbe E-Mail-Adresse mehrfach verwendet werden? =
+Das ist pro Event konfigurierbar. In den Event-Einstellungen (Tab „Event-Details") gibt es eine entsprechende Checkbox.
+
+== Changelog ==
+
+= 1.1.0 =
+* Neu: Duplikat-E-Mail-Schutz pro Event (konfigurierbar)
+* Neu: Schutz gegen Doppelabsenden des Anmeldeformulars (Submit-Token)
+* Neu: Honeypot-Feld gegen automatisierte Bot-Anmeldungen
+* Neu: Paginierung der Anmeldungsliste (50 Einträge pro Seite)
+* Neu: Saubere Deinstallation (alle Tabellen und Optionen werden entfernt)
+* Neu: Datenbankversion-Prüfung bei Plugin-Updates (automatische Migration)
+* Verbesserung: Erfolgsmeldung nicht mehr als URL-Parameter (?ee_success=1)
+* Verbesserung: URL-Parameter nach Anzeige via history.replaceState entfernt
+* Verbesserung: Whitelist für $_POST-Felder in process_save_event()
+* Verbesserung: MySQL-Transaktion umschliesst jetzt save_event + save_groups
+* Verbesserung: DB-Fehler beim Speichern werden dem Admin angezeigt
+* Verbesserung: Ungültige E-Mail-Adressen lösen Admin-Warnung aus statt lautlos gelöscht zu werden
+* Verbesserung: max_tickets-Warnung wenn Wert unter bereits verkaufte Tickets gesetzt wird
+* Verbesserung: Gruppen-IDs bleiben beim Speichern erhalten (verhindert Datenverlust bei Anmeldungsreferenzen)
+* Verbesserung: Löschen-Dialog zeigt konkrete Anzahl betroffener Anmeldungen und Gruppen
+* Sicherheit: Header-Injection-Schutz im E-Mail-Absenderfeld
+* Sicherheit: wp_validate_redirect() für Formular-Rückgabe-URL
+* Sicherheit: Nonce-Schutz beim Aufrufen des Event-Bearbeitungsformulars
+* Sicherheit: Capability-Check in allen Admin-Page-Callbacks
+
+= 1.0.0 =
+* Erstveröffentlichung

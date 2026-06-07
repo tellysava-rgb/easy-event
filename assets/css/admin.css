@@ -1,0 +1,172 @@
+/* Easy Event – Admin Styles */
+
+/* ------------------------------------------------------------------
+   Tabs
+   ------------------------------------------------------------------ */
+#ee-tabs {
+    margin-top: 16px;
+}
+
+.ee-tab-nav {
+    display: flex;
+    gap: 0;
+    margin: 0 0 0 0;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.ee-tab-nav li {
+    margin: 0;
+}
+
+.ee-tab-link {
+    display: block;
+    padding: 8px 18px;
+    text-decoration: none;
+    color: #50575e;
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-bottom: none;
+    margin-right: 3px;
+    border-radius: 3px 3px 0 0;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.ee-tab-link:hover {
+    color: #2271b1;
+    background: #fff;
+}
+
+.ee-tab-link.active {
+    background: #fff;
+    color: #1d2327;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+    font-weight: 600;
+}
+
+.ee-tab-panel {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+    padding: 16px 20px;
+}
+
+/* ------------------------------------------------------------------
+   Kompakte Form-Table
+   ------------------------------------------------------------------ */
+.form-table.ee-compact th,
+.form-table.ee-compact td {
+    padding: 8px 10px;
+}
+
+.form-table.ee-compact th {
+    width: 180px;
+    font-weight: 600;
+}
+
+.form-table.ee-compact p.description {
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+/* ------------------------------------------------------------------
+   Gruppen-Tabelle
+   ------------------------------------------------------------------ */
+#ee-groups-table {
+    margin-bottom: 10px;
+}
+
+#ee-groups-table td,
+#ee-groups-table th {
+    vertical-align: middle;
+    padding: 7px 10px;
+}
+
+#ee-groups-table .small-text {
+    width: 70px;
+}
+
+#ee-groups-table input[type="text"].regular-text {
+    width: 100%;
+    max-width: 260px;
+}
+
+#ee-add-group {
+    margin-top: 8px;
+}
+
+.ee-group-row:hover {
+    background: #f9f9f9;
+}
+
+/* Shortcode in Events-Liste */
+.wp-list-table code {
+    font-size: 12px;
+}
+
+/* Klickbare Platzhalter */
+.ee-placeholder {
+    cursor: pointer;
+    display: inline-block;
+    padding: 1px 5px;
+    background: #e8f0fe;
+    border: 1px solid #aec4f5;
+    border-radius: 3px;
+    color: #2271b1;
+    font-size: 12px;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.ee-placeholder:hover {
+    background: #c8dbfc;
+    border-color: #2271b1;
+}
+
+/* ------------------------------------------------------------------
+   Tab-Navigation Buttons (Weiter / Zurück)
+   ------------------------------------------------------------------ */
+.ee-tab-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 0 6px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 16px;
+}
+
+/* ------------------------------------------------------------------
+   Feldvalidierung
+   ------------------------------------------------------------------ */
+.ee-input-error {
+    border-color: #d63638 !important;
+    background-color: #fff8f8 !important;
+}
+
+.ee-field-hint {
+    display: none;
+    color: #d63638;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* Test-E-Mail Zeile im E-Mail-Tab */
+.ee-test-email-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ee-test-email-row .regular-text {
+    max-width: 280px;
+}
+
+#ee-test-result {
+    font-size: 13px;
+    font-weight: 500;
+}
