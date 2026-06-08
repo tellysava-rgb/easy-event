@@ -69,13 +69,13 @@ foreach ( $errors as $err ) {
                 $sel      = selected( $form_data['group_id'] ?? '', $group->id, false );
                 $disabled = ( $group->remaining === 0 ) ? ' disabled' : '';
 
-                $desc_part = ! empty( $group->description ) ? ' ' . $group->description : '';
-                if ( $group->remaining === 0 ) {
-                    $label = $group->group_number . ' Ausverkauft' . $desc_part;
+                $group_label = $group->group_number . ( ! empty( $group->description ) ? ' ' . $group->description : '' );
+                if ( (int) $group->remaining === 0 ) {
+                    $label = 'Ausverkauft - ' . $group_label;
                 } elseif ( $group->remaining <= 10 ) {
-                    $label = $group->group_number . ' noch ' . $group->remaining . ' verfügbar' . $desc_part;
+                    $label = 'noch ' . $group->remaining . ' Tickets - ' . $group_label;
                 } else {
-                    $label = $group->group_number . $desc_part;
+                    $label = $group_label;
                 }
                 ?>
                 <option value="<?php echo (int) $group->id; ?>"<?php echo $sel . $disabled; ?>>
