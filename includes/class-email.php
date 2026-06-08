@@ -29,18 +29,22 @@ class Easy_Event_Email {
     public static function send_admin_notification( $registration, $event, $group ) {
         if ( empty( $event->admin_email ) ) return false;
 
+        $gruppe_info = $group
+            ? 'Gruppe ' . $group->group_number . ( ! empty( $group->description ) ? ' – ' . $group->description : '' )
+            : '–';
+
         $to      = $event->admin_email;
         $subject = 'Neue Anmeldung: ' . $event->title;
         $body    = 'Neue Anmeldung für: ' . $event->title . "\n\n";
         $body   .= 'Name:            ' . $registration->name    . "\n";
         $body   .= 'E-Mail:          ' . $registration->email   . "\n";
-        $body   .= 'Gruppe:          Gruppe ' . $group->group_number . ' – ' . $group->start_time . ' – ' . $group->leader . "\n";
+        $body   .= 'Gruppe:          ' . $gruppe_info           . "\n";
         $body   .= 'Anzahl Tickets:  ' . $registration->tickets . "\n";
         $body   .= 'Anmeldedatum:    ' . date_i18n( 'd.m.Y H:i', strtotime( $registration->created_at ) ) . "\n";
 
         $headers = array( 'Content-Type: text/plain; charset=UTF-8' );
         if ( ! empty( $event->sender_email ) ) {
-            $headers[] = 'From: ' . $event->sender_name . ' <' . $event->sender_email . '>';
+            $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
         }
 
         return wp_mail( $to, $subject, $body, $headers );
@@ -58,8 +62,7 @@ class Easy_Event_Email {
         );
         $fake_group = (object) array(
             'group_number' => 1,
-            'start_time'   => '10:00',
-            'leader'       => 'Anna Beispiel',
+            'description'  => 'Beispielgruppe',
         );
 
         $subject = '[TEST] ' . self::replace_placeholders( $event->confirmation_subject ?: 'Test-E-Mail: ' . $event->title, $fake_reg, $event, $fake_group );
@@ -69,7 +72,7 @@ class Easy_Event_Email {
 
         $headers = array( 'Content-Type: text/plain; charset=UTF-8' );
         if ( ! empty( $event->sender_email ) ) {
-            $headers[] = 'From: ' . $event->sender_name . ' <' . $event->sender_email . '>';
+            $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
         }
 
         return wp_mail( $to, $subject, $body, $headers );
@@ -80,7 +83,7 @@ class Easy_Event_Email {
      *
      * Available placeholders:
      *   {name}, {email}, {tickets},
-     *   {gruppe_nr}, {startzeit}, {gruppenleiter},
+     *   {gruppe_nr}, {gruppe_beschreibung},
      *   {event_titel}, {event_datum}
      */
     private static function replace_placeholders( $text, $registration, $event, $group ) {
@@ -89,14 +92,13 @@ class Easy_Event_Email {
             : '';
 
         $map = array(
-            '{name}'          => $registration->name    ?? '',
-            '{email}'         => $registration->email   ?? '',
-            '{tickets}'       => $registration->tickets ?? '',
-            '{gruppe_nr}'     => $group->group_number   ?? '',
-            '{startzeit}'     => $group->start_time     ?? '',
-            '{gruppenleiter}' => $group->leader         ?? '',
-            '{event_titel}'   => $event->title          ?? '',
-            '{event_datum}'   => $event_date,
+            '{name}'                => $registration->name    ?? '',
+            '{email}'               => $registration->email   ?? '',
+            '{tickets}'             => $registration->tickets ?? '',
+            '{gruppe_nr}'           => $group ? ( $group->group_number ?? '' ) : '',
+            '{gruppe_beschreibung}' => $group ? ( $group->description  ?? '' ) : '',
+            '{event_titel}'         => $event->title          ?? '',
+            '{event_datum}'         => $event_date,
         );
 
         return str_replace( array_keys( $map ), array_values( $map ), $text );

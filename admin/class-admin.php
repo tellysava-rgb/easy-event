@@ -12,11 +12,16 @@ class Easy_Event_Admin {
     private static $form_event    = null;  // stdClass|null  – befülltes $event-Objekt
     private static $form_groups   = array();
 
+    public static function ee_ph( $tag ) {
+        return '<code class="ee-placeholder" data-value="' . esc_attr( $tag ) . '" title="Klicken zum Einfügen">' . esc_html( $tag ) . '</code>';
+    }
+
     public static function init() {
         add_action( 'admin_menu',            array( __CLASS__, 'register_menus' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
         add_action( 'admin_init',            array( __CLASS__, 'handle_form_submissions' ) );
         add_action( 'wp_ajax_ee_send_test_email', array( __CLASS__, 'ajax_send_test_email' ) );
+        add_action( 'wp_ajax_ee_save_event',     array( __CLASS__, 'ajax_save_event' ) );
     }
 
     // ------------------------------------------------------------------
@@ -75,7 +80,7 @@ class Easy_Event_Admin {
         if ( ! current_user_can( 'manage_options' ) ) return;
 
         // --- Save event ---
-        if ( isset( $_POST['easy_event_save_event'] ) ) {
+        if ( isset( $_POST['easy_event_save_event'] ) && ! wp_doing_ajax() ) {
             check_admin_referer( 'easy_event_save_event' );
 
             $result = self::process_save_event();
@@ -94,10 +99,6 @@ class Easy_Event_Admin {
             // Erfolg → einziger Redirect erlaubt
             $event_id = $result['event_id'];
             $redirect = admin_url( 'admin.php?page=easy-event&action=edit&id=' . $event_id . '&saved=1' );
-            $next_tab = sanitize_key( $_POST['ee_next_tab'] ?? '' );
-            if ( $next_tab ) {
-                $redirect = add_query_arg( 'tab', $next_tab, $redirect );
-            }
             $redirect = wp_nonce_url( $redirect, 'easy_event_edit_' . $event_id );
             if ( ! empty( $result['warnings'] ) ) {
                 set_transient( 'ee_admin_warnings_' . $event_id, $result['warnings'], 120 );
@@ -279,8 +280,7 @@ class Easy_Event_Admin {
                 $groups[] = array(
                     'id'           => absint( $g['id']           ?? 0 ),
                     'group_number' => absint( $g['group_number'] ),
-                    'start_time'   => sanitize_text_field( $g['start_time']  ?? '' ),
-                    'leader'       => sanitize_text_field( $g['leader']      ?? '' ),
+                    'description'  => sanitize_text_field( $g['description'] ?? '' ),
                     'max_tickets'  => absint( $g['max_tickets']  ?? 10 ),
                 );
             }
@@ -301,15 +301,14 @@ class Easy_Event_Admin {
         $out = fopen( 'php://output', 'w' );
         // UTF-8 BOM for Excel
         fputs( $out, "\xEF\xBB\xBF" );
-        fputcsv( $out, array( 'Name', 'E-Mail', 'Gruppe Nr.', 'Startzeit', 'Gruppenleiter', 'Tickets', 'Anmeldedatum' ), ';' );
+        fputcsv( $out, array( 'Name', 'E-Mail', 'Gruppe Nr.', 'Beschreibung', 'Tickets', 'Anmeldedatum' ), ';' );
 
         foreach ( $registrations as $r ) {
             fputcsv( $out, array(
                 $r->name,
                 $r->email,
                 $r->group_number ?? '',
-                $r->start_time   ?? '',
-                $r->leader       ?? '',
+                $r->description  ?? '',
                 $r->tickets,
                 date_i18n( 'd.m.Y H:i', strtotime( $r->created_at ) ),
             ), ';' );
@@ -332,11 +331,6 @@ class Easy_Event_Admin {
             $event    = self::$form_event;
             $groups   = self::$form_groups;
             $ee_error = self::$form_error;
-            // action/id aus dem (vorhandenen) POST-Daten ableiten, damit die View korrekt rendert
-            $_GET['action'] = $event && $event->id ? 'edit' : 'new';
-            if ( $event && $event->id ) {
-                $_GET['id'] = $event->id;
-            }
             include EASY_EVENT_PATH . 'admin/views/event-edit.php';
             return;
         }
@@ -356,7 +350,10 @@ class Easy_Event_Admin {
             $ee_error = null;
             include EASY_EVENT_PATH . 'admin/views/event-edit.php';
         } else {
-            $events = Easy_Event_Database::get_events();
+            $per_page = 50;
+            $paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+            $total    = Easy_Event_Database::count_events();
+            $events   = Easy_Event_Database::get_events( $per_page, $paged );
             include EASY_EVENT_PATH . 'admin/views/events-list.php';
         }
     }
@@ -372,6 +369,28 @@ class Easy_Event_Admin {
         $events        = Easy_Event_Database::get_events();
         $registrations = Easy_Event_Database::get_registrations( $event_id ?: null, $per_page, $paged );
         include EASY_EVENT_PATH . 'admin/views/registrations.php';
+    }
+
+    // ------------------------------------------------------------------
+    // AJAX: Event speichern (für den «Weiter»-Button ohne Page-Reload)
+    // ------------------------------------------------------------------
+
+    public static function ajax_save_event() {
+        check_ajax_referer( 'easy_event_save_event', '_wpnonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Keine Berechtigung.' ) );
+        }
+
+        $result = self::process_save_event();
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+        }
+
+        wp_send_json_success( array(
+            'event_id' => $result['event_id'],
+            'warnings' => $result['warnings'],
+        ) );
     }
 
     // ------------------------------------------------------------------

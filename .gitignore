@@ -1,0 +1,42 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Dependencies
+node_modules/
+vendor/
+composer.phar
+
+# Build artefacts
+*.zip
+*.tar.gz
+dist/
+build/
+
+# Logs
+*.log
+
+# Environment / secrets
+.env
+.env.*
+
+# PHP
+.phpunit.result.cache
+coverage/
+
+# npm / yarn
+package-lock.json
+yarn.lock
+
+# WordPress core (wenn lokal installiert)
+/wordpress/
+/wp/
+wp-config.php
+wp-content/uploads/

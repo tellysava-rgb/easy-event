@@ -9,7 +9,7 @@
     <!-- Filter -->
     <form method="get" action="" style="margin: 16px 0;">
         <input type="hidden" name="page" value="easy-event-registrations">
-        <select name="event_id" onchange="this.form.submit()" style="height:32px">
+        <select name="event_id" id="ee-event-filter" style="height:32px">
             <option value="">— Alle Events —</option>
             <?php foreach ( $events as $ev ) : ?>
                 <option value="<?php echo (int) $ev->id; ?>" <?php selected( $event_id, $ev->id ); ?>>
@@ -55,9 +55,16 @@
                     <td colspan="7">Keine Anmeldungen vorhanden.</td>
                 </tr>
             <?php else : ?>
+                <?php
+                // Build events map to avoid N+1 queries
+                $events_map = array();
+                foreach ( $events as $ev ) {
+                    $events_map[ $ev->id ] = $ev;
+                }
+                ?>
                 <?php foreach ( $registrations as $reg ) : ?>
                     <?php
-                    $ev_obj     = Easy_Event_Database::get_event( $reg->event_id );
+                    $ev_obj     = $events_map[ $reg->event_id ] ?? null;
                     $delete_url = wp_nonce_url(
                         admin_url( 'admin.php?page=easy-event-registrations&action=delete_registration&id=' . $reg->id . '&event_id=' . $reg->event_id ),
                         'easy_event_delete_registration_' . $reg->id
@@ -70,8 +77,9 @@
                         <td>
                             <?php if ( ! empty( $reg->group_number ) ) : ?>
                                 Gruppe <?php echo (int) $reg->group_number; ?>
-                                &ndash; <?php echo esc_html( $reg->start_time ); ?>
-                                &ndash; <?php echo esc_html( $reg->leader ); ?>
+                                <?php if ( ! empty( $reg->description ) ) : ?>
+                                    &ndash; <?php echo esc_html( $reg->description ); ?>
+                                <?php endif; ?>
                             <?php else : ?>
                                 &ndash;
                             <?php endif; ?>

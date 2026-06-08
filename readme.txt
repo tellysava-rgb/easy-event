@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
 Tested with PHP: 8.3.5
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,7 +18,7 @@ Easy Event ermöglicht die Verwaltung von Veranstaltungen mit Ticketkontingenten
 **Funktionen:**
 
 * Unbegrenzt viele Events gleichzeitig
-* Gruppenaufteilung mit Startzeiten und Gruppenleiter
+* Gruppenaufteilung mit frei konfigurierbarem Beschreibungsfeld
 * Vorverkaufs-Countdown mit konfigurierbarem Datum und Uhrzeit
 * Ticketkontingente pro Gruppe mit Echtzeit-Verfügbarkeitsanzeige
 * Bestätigungs-E-Mail an Teilnehmer und Benachrichtigung an Admin
@@ -51,6 +51,14 @@ Das Plugin verwendet MySQL-Transaktionen mit Row-Level-Locking. Überverkäufe s
 Das ist pro Event konfigurierbar. In den Event-Einstellungen (Tab „Event-Details") gibt es eine entsprechende Checkbox.
 
 == Changelog ==
+
+= 1.2.0 =
+* Änderung: Gruppen haben kein Startzeit- und kein Gruppenleiter-Feld mehr, sondern ein freies Beschreibungsfeld
+* Datenbank-Migration: Spalten `start_time` / `leader` entfernt, neue Spalte `description` hinzugefügt (DB v1.4)
+* Fix: „Column 'presale_date' cannot be null" beim Speichern eines Events ohne Gruppen und ohne Vorverkauf
+* E-Mail-Platzhalter: `{startzeit}` und `{gruppenleiter}` durch `{gruppe_beschreibung}` ersetzt
+* CSV-Export: Spalten „Startzeit" / „Gruppenleiter" durch „Beschreibung" ersetzt
+* Neu: .gitignore hinzugefügt
 
 = 1.1.0 =
 * Neu: Duplikat-E-Mail-Schutz pro Event (konfigurierbar)

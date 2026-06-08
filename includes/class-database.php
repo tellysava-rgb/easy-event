@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Easy_Event_Database {
 
     const DB_VERSION_OPTION = 'easy_event_db_version';
-    const DB_VERSION        = '1.3';
+    const DB_VERSION        = '1.4';
 
     // ------------------------------------------------------------------
     // Installation & Updates
@@ -16,8 +16,7 @@ class Easy_Event_Database {
      */
     public static function maybe_upgrade() {
         if ( get_option( self::DB_VERSION_OPTION ) !== self::DB_VERSION ) {
-            self::create_tables();
-            self::run_migrations();
+            self::create_tables(); // also calls run_migrations() internally
         }
     }
 
@@ -67,6 +66,20 @@ class Easy_Event_Database {
         if ( ! empty( $col ) && strpos( $col[0]->Null, 'YES' ) === false ) {
             $wpdb->query( "ALTER TABLE {$wpdb->prefix}easy_event_events MODIFY COLUMN presale_time time DEFAULT NULL" );
         }
+
+        // v1.4: Groups-Tabelle: start_time / leader entfernt, description hinzugefügt
+        $col = $wpdb->get_results( "SHOW COLUMNS FROM {$wpdb->prefix}easy_event_groups LIKE 'description'" );
+        if ( empty( $col ) ) {
+            $wpdb->query( "ALTER TABLE {$wpdb->prefix}easy_event_groups ADD COLUMN description varchar(255) NOT NULL DEFAULT ''" );
+        }
+        $col = $wpdb->get_results( "SHOW COLUMNS FROM {$wpdb->prefix}easy_event_groups LIKE 'start_time'" );
+        if ( ! empty( $col ) ) {
+            $wpdb->query( "ALTER TABLE {$wpdb->prefix}easy_event_groups DROP COLUMN start_time" );
+        }
+        $col = $wpdb->get_results( "SHOW COLUMNS FROM {$wpdb->prefix}easy_event_groups LIKE 'leader'" );
+        if ( ! empty( $col ) ) {
+            $wpdb->query( "ALTER TABLE {$wpdb->prefix}easy_event_groups DROP COLUMN leader" );
+        }
     }
 
     public static function create_tables() {
@@ -102,8 +115,7 @@ class Easy_Event_Database {
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             event_id bigint(20) UNSIGNED NOT NULL,
             group_number int(11) NOT NULL DEFAULT 1,
-            start_time varchar(10) NOT NULL DEFAULT '',
-            leader varchar(255) DEFAULT '',
+            description varchar(255) NOT NULL DEFAULT '',
             max_tickets int(11) NOT NULL DEFAULT 100,
             PRIMARY KEY (id),
             KEY event_id (event_id)
@@ -138,10 +150,22 @@ class Easy_Event_Database {
     // Events
     // ------------------------------------------------------------------
 
-    public static function get_events() {
+    public static function count_events() {
         global $wpdb;
+        return (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}easy_event_events"
+        );
+    }
+
+    public static function get_events( $per_page = 0, $page = 1 ) {
+        global $wpdb;
+        $limit = '';
+        if ( $per_page > 0 ) {
+            $offset = max( 0, ( (int) $page - 1 ) * (int) $per_page );
+            $limit  = $wpdb->prepare( ' LIMIT %d OFFSET %d', $per_page, $offset );
+        }
         return $wpdb->get_results(
-            "SELECT * FROM {$wpdb->prefix}easy_event_events ORDER BY event_date DESC"
+            "SELECT * FROM {$wpdb->prefix}easy_event_events ORDER BY event_date DESC" . $limit
         );
     }
 
@@ -175,7 +199,7 @@ class Easy_Event_Database {
             'sender_email'               => is_email( $data['sender_email'] ?? '' ) ? sanitize_email( $data['sender_email'] ) : '',
             'confirmation_subject'       => sanitize_text_field( $data['confirmation_subject'] ?? '' ),
             'confirmation_text'          => sanitize_textarea_field( $data['confirmation_text'] ?? '' ),
-            'allow_duplicate_email'      => isset( $data['allow_duplicate_email'] ) ? 1 : 0,
+            'allow_duplicate_email'      => ! empty( $data['allow_duplicate_email'] ) ? 1 : 0,
         );
         $formats = array( '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );
 
@@ -247,11 +271,10 @@ class Easy_Event_Database {
             $data = array(
                 'event_id'     => $event_id,
                 'group_number' => absint( $g['group_number'] ),
-                'start_time'   => sanitize_text_field( $g['start_time'] ?? '' ),
-                'leader'       => sanitize_text_field( $g['leader'] ?? '' ),
+                'description'  => sanitize_text_field( $g['description'] ?? '' ),
                 'max_tickets'  => absint( $g['max_tickets'] ?? 10 ),
             );
-            $formats = array( '%d', '%d', '%s', '%s', '%d' );
+            $formats = array( '%d', '%d', '%s', '%d' );
 
             $row_id = absint( $g['id'] ?? 0 );
 
@@ -319,15 +342,16 @@ class Easy_Event_Database {
 
     public static function get_groups_with_availability( $event_id ) {
         global $wpdb;
-        $groups = self::get_groups( $event_id );
-        foreach ( $groups as &$group ) {
-            $sold            = (int) $wpdb->get_var( $wpdb->prepare(
-                "SELECT COALESCE(SUM(tickets), 0) FROM {$wpdb->prefix}easy_event_registrations WHERE group_id = %d",
-                $group->id
-            ) );
-            $group->remaining = max( 0, (int) $group->max_tickets - $sold );
-        }
-        return $groups;
+        return $wpdb->get_results( $wpdb->prepare(
+            "SELECT g.*,
+                    GREATEST(0, g.max_tickets - COALESCE(SUM(r.tickets), 0)) AS remaining
+             FROM {$wpdb->prefix}easy_event_groups g
+             LEFT JOIN {$wpdb->prefix}easy_event_registrations r ON r.group_id = g.id
+             WHERE g.event_id = %d
+             GROUP BY g.id
+             ORDER BY g.group_number ASC",
+            absint( $event_id )
+        ) );
     }
 
     public static function is_event_sold_out( $event_id ) {
@@ -361,7 +385,7 @@ class Easy_Event_Database {
 
         if ( $event_id ) {
             return $wpdb->get_results( $wpdb->prepare(
-                "SELECT r.*, g.group_number, g.start_time, g.leader
+                "SELECT r.*, g.group_number, g.description
                  FROM {$wpdb->prefix}easy_event_registrations r
                  LEFT JOIN {$wpdb->prefix}easy_event_groups g ON r.group_id = g.id
                  WHERE r.event_id = %d
@@ -370,7 +394,7 @@ class Easy_Event_Database {
             ) );
         }
         return $wpdb->get_results(
-            "SELECT r.*, g.group_number, g.start_time, g.leader
+            "SELECT r.*, g.group_number, g.description
              FROM {$wpdb->prefix}easy_event_registrations r
              LEFT JOIN {$wpdb->prefix}easy_event_groups g ON r.group_id = g.id
              ORDER BY r.created_at DESC" . $limit
@@ -472,17 +496,30 @@ class Easy_Event_Database {
             }
         }
 
-        $wpdb->insert(
-            $wpdb->prefix . 'easy_event_registrations',
-            array(
-                'event_id' => absint( $data['event_id'] ),
-                'group_id' => $group_id,
-                'name'     => sanitize_text_field( $data['name'] ),
-                'email'    => sanitize_email( $data['email'] ),
-                'tickets'  => $tickets,
-            ),
-            array( '%d', $group_id ? '%d' : 'NULL', '%s', '%s', '%d' )
-        );
+        if ( $group_id !== null ) {
+            $wpdb->insert(
+                $wpdb->prefix . 'easy_event_registrations',
+                array(
+                    'event_id' => absint( $data['event_id'] ),
+                    'group_id' => $group_id,
+                    'name'     => sanitize_text_field( $data['name'] ),
+                    'email'    => sanitize_email( $data['email'] ),
+                    'tickets'  => $tickets,
+                ),
+                array( '%d', '%d', '%s', '%s', '%d' )
+            );
+        } else {
+            $wpdb->insert(
+                $wpdb->prefix . 'easy_event_registrations',
+                array(
+                    'event_id' => absint( $data['event_id'] ),
+                    'name'     => sanitize_text_field( $data['name'] ),
+                    'email'    => sanitize_email( $data['email'] ),
+                    'tickets'  => $tickets,
+                ),
+                array( '%d', '%s', '%s', '%d' )
+            );
+        }
 
         $insert_id = (int) $wpdb->insert_id;
         $wpdb->query( 'COMMIT' );

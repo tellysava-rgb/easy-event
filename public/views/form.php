@@ -1,18 +1,14 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit;
 
-// Feldfehler aus Server-Validierung aufbereiten (key => message)
+// Feldfehler aus Server-Validierung aufbereiten (field => message)
 $field_errors = array();
-if ( ! empty( $errors ) ) {
-    foreach ( $errors as $err ) {
-        if ( strpos( $err, 'Namen' ) !== false || strpos( $err, 'Name' ) !== false ) {
-            $field_errors['name'] = $err;
-        } elseif ( strpos( $err, 'E-Mail' ) !== false || strpos( $err, 'Email' ) !== false ) {
-            $field_errors['email'] = $err;
-        } elseif ( strpos( $err, 'Gruppe' ) !== false ) {
-            $field_errors['group_id'] = $err;
-        } else {
-            $field_errors['general'][] = $err;
-        }
+foreach ( $errors as $err ) {
+    $field   = is_array( $err ) ? ( $err['field']   ?? 'general' ) : 'general';
+    $message = is_array( $err ) ? ( $err['message'] ?? (string) $err ) : (string) $err;
+    if ( $field === 'general' ) {
+        $field_errors['general'][] = $message;
+    } else {
+        $field_errors[ $field ] = $message;
     }
 }
 ?>
@@ -41,7 +37,7 @@ if ( ! empty( $errors ) ) {
     </div>
 
     <div class="easy-event-field<?php echo isset( $field_errors['name'] ) ? ' ee-field-error' : ''; ?>">
-        <label for="ee-f-name">Name <span class="required">*</span></label>
+        <label for="ee-f-name"><?php _e( 'Name', 'easy-event' ); ?> <span class="required">*</span></label>
         <input type="text" id="ee-f-name" name="name" required
                value="<?php echo esc_attr( $form_data['name'] ?? '' ); ?>">
         <?php if ( isset( $field_errors['name'] ) ) : ?>
@@ -52,7 +48,7 @@ if ( ! empty( $errors ) ) {
     </div>
 
     <div class="easy-event-field<?php echo isset( $field_errors['email'] ) ? ' ee-field-error' : ''; ?>">
-        <label for="ee-f-email">E-Mail <span class="required">*</span></label>
+        <label for="ee-f-email"><?php _e( 'E-Mail', 'easy-event' ); ?> <span class="required">*</span></label>
         <input type="email" id="ee-f-email" name="email" required
                pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                value="<?php echo esc_attr( $form_data['email'] ?? '' ); ?>">
@@ -65,7 +61,7 @@ if ( ! empty( $errors ) ) {
 
     <?php if ( $event->has_groups ) : ?>
     <div class="easy-event-field<?php echo isset( $field_errors['group_id'] ) ? ' ee-field-error' : ''; ?>">
-        <label for="ee-f-group">Gruppe <span class="required">*</span></label>
+        <label for="ee-f-group"><?php _e( 'Gruppe', 'easy-event' ); ?> <span class="required">*</span></label>
         <select id="ee-f-group" name="group_id" required>
             <option value="">— Gruppe auswählen —</option>
             <?php foreach ( $groups as $group ) : ?>
@@ -73,19 +69,13 @@ if ( ! empty( $errors ) ) {
                 $sel      = selected( $form_data['group_id'] ?? '', $group->id, false );
                 $disabled = ( $group->remaining === 0 ) ? ' disabled' : '';
 
+                $desc_suffix = ! empty( $group->description ) ? ' – ' . $group->description : '';
                 if ( $group->remaining === 0 ) {
-                    $label = 'Ausverkauft – Gruppe ' . $group->group_number
-                           . ( $group->start_time ? ' – ' . $group->start_time : '' )
-                           . ( $group->leader     ? ' – ' . $group->leader     : '' );
-                } elseif ( $group->remaining <= 15 ) {
-                    $label = 'Noch ' . $group->remaining . ' Ticket(s) verfügbar'
-                           . ' – Gruppe ' . $group->group_number
-                           . ( $group->start_time ? ' – ' . $group->start_time : '' )
-                           . ( $group->leader     ? ' – ' . $group->leader     : '' );
+                    $label = 'Ausverkauft – Gruppe ' . $group->group_number . $desc_suffix;
+                } elseif ( $group->remaining <= Easy_Event_Shortcode::MAX_TICKETS ) {
+                    $label = 'Noch ' . $group->remaining . ' Ticket(s) verfügbar – Gruppe ' . $group->group_number . $desc_suffix;
                 } else {
-                    $label = 'Gruppe ' . $group->group_number
-                           . ( $group->start_time ? ' – ' . $group->start_time : '' )
-                           . ( $group->leader     ? ' – ' . $group->leader     : '' );
+                    $label = 'Gruppe ' . $group->group_number . $desc_suffix;
                 }
                 ?>
                 <option value="<?php echo (int) $group->id; ?>"<?php echo $sel . $disabled; ?>>
@@ -102,11 +92,11 @@ if ( ! empty( $errors ) ) {
     <?php endif; ?>
 
     <div class="easy-event-field">
-        <label for="ee-f-tickets">Anzahl Tickets <span class="required">*</span></label>
+        <label for="ee-f-tickets"><?php _e( 'Anzahl Tickets', 'easy-event' ); ?> <span class="required">*</span></label>
         <select id="ee-f-tickets" name="tickets">
             <?php
             $sel_tickets = absint( $form_data['tickets'] ?? 1 );
-            for ( $i = 1; $i <= 15; $i++ ) :
+            for ( $i = 1; $i <= Easy_Event_Shortcode::MAX_TICKETS; $i++ ) :
             ?>
                 <option value="<?php echo $i; ?>" <?php selected( $sel_tickets, $i ); ?>>
                     <?php echo $i; ?>
@@ -118,7 +108,7 @@ if ( ! empty( $errors ) ) {
 
     <div class="easy-event-submit">
         <button type="submit" class="easy-event-btn">
-            Jetzt anmelden
+            <?php _e( 'Jetzt anmelden', 'easy-event' ); ?>
         </button>
     </div>
 </form>

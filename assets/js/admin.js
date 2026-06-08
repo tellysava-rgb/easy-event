@@ -13,8 +13,6 @@ jQuery(function ($) {
         order.push('ee-tab-email');
         return order;
     }
-    var tabOrder = ['ee-tab-details', 'ee-tab-groups', 'ee-tab-presale', 'ee-tab-email'];
-
     function switchToTab(tabId) {
         $('.ee-tab-link').removeClass('active');
         $('.ee-tab-panel').hide();
@@ -160,8 +158,7 @@ jQuery(function ($) {
     $('#ee-has-groups, #ee-has-presale').on('change', updateTabVisibility);
     updateTabVisibility(); // Initialzustand setzen
 
-    var isEditMode    = parseInt($('input[name="event_id"]').val(), 10) > 0;
-    var savingViaNext = false;
+    var isEditMode = parseInt($('input[name="event_id"]').val(), 10) > 0;
 
     $(document).on('click', '.ee-tab-next', function () {
         var currentId = $(this).closest('.ee-tab-panel').attr('id');
@@ -173,13 +170,64 @@ jQuery(function ($) {
         var nextTab = idx < order.length - 1 ? order[idx + 1] : null;
         if (!nextTab) return;
 
-        if (isEditMode) {
-            savingViaNext = true;
-            $('#ee-next-tab').val(nextTab);
-            $('#easy-event-form').trigger('submit');
-        } else {
+        if (!isEditMode) {
             switchToTab(nextTab);
+            return;
         }
+
+        var $btn     = $(this);
+        var origText = $btn.text();
+
+        $btn.prop('disabled', true).text('Wird gespeichert…');
+        $('#ee-ajax-notice').hide();
+
+        if (typeof tinymce !== 'undefined') {
+            tinymce.triggerSave();
+        }
+        var formData = new FormData(document.getElementById('easy-event-form'));
+        formData.append('action', 'ee_save_event');
+
+        $.ajax({
+            url:         eeAdmin.ajaxUrl,
+            type:        'POST',
+            data:        formData,
+            processData: false,
+            contentType: false,
+        })
+        .done(function (res) {
+            if (res.success) {
+                if (res.data.event_id) {
+                    $('input[name="event_id"]').val(res.data.event_id);
+                    isEditMode = true;
+                }
+                if (res.data.warnings && res.data.warnings.length) {
+                    var html = '<strong>Gespeichert – aber mit Hinweisen:</strong><ul>';
+                    $.each(res.data.warnings, function (i, w) {
+                        html += '<li>' + $('<div>').text(w).html() + '</li>';
+                    });
+                    html += '</ul>';
+                    $('#ee-ajax-notice').removeClass('notice-error').addClass('notice-warning').html(html).show();
+                }
+                switchToTab(nextTab);
+            } else {
+                var msg = (res.data && res.data.message)
+                    ? $('<div>').text(res.data.message).html()
+                    : 'Unbekannter Fehler.';
+                $('#ee-ajax-notice')
+                    .removeClass('notice-warning').addClass('notice-error')
+                    .html('<strong>Fehler beim Speichern:</strong> ' + msg)
+                    .show();
+            }
+        })
+        .fail(function () {
+            $('#ee-ajax-notice')
+                .removeClass('notice-warning').addClass('notice-error')
+                .html('<strong>Verbindungsfehler.</strong> Bitte erneut versuchen.')
+                .show();
+        })
+        .always(function () {
+            $btn.prop('disabled', false).text(origText);
+        });
     });
 
     $(document).on('click', '.ee-tab-prev', function () {
@@ -195,10 +243,6 @@ jQuery(function ($) {
     // Finale Validierung beim Absenden (Fallback, falls jemand direkt speichert)
     // ------------------------------------------------------------------
     $('#easy-event-form').on('submit', function (e) {
-        if (savingViaNext) {
-            savingViaNext = false;
-            return; // aktueller Tab bereits validiert, Submit durchlassen
-        }
         var firstInvalidTab = null;
         getTabOrder().forEach(function (tabId) {
             if (!validateTab(tabId) && !firstInvalidTab) {
@@ -231,9 +275,8 @@ jQuery(function ($) {
         var row = '<tr class="ee-group-row">' +
             '<td><input type="hidden" name="groups[' + i + '][id]" value="0">' +
             '<input type="number" name="groups[' + i + '][group_number]" value="' + (i + 1) + '" min="1" class="small-text" required></td>' +
-            '<td><input type="text"   name="groups[' + i + '][start_time]"   placeholder="10:00" class="small-text"></td>' +
-            '<td><input type="text"   name="groups[' + i + '][leader]"       class="regular-text"></td>' +
-            '<td><input type="number" name="groups[' + i + '][max_tickets]"  value="10" min="1" class="small-text" required></td>' +
+            '<td><input type="text" name="groups[' + i + '][description]" class="regular-text"></td>' +
+            '<td><input type="number" name="groups[' + i + '][max_tickets]" value="10" min="1" class="small-text" required></td>' +
             '<td><button type="button" class="button ee-remove-group">Entfernen</button></td>' +
             '</tr>';
         $('#ee-groups-body').append(row);
@@ -288,6 +331,13 @@ jQuery(function ($) {
                 setTimeout(function () { $c.attr('title', 'Klicken zum Einfügen'); }, 1500);
             }
         }
+    });
+
+    // ------------------------------------------------------------------
+    // Anmeldungen-Filter: Event-Dropdown auto-submit
+    // ------------------------------------------------------------------
+    $('#ee-event-filter').on('change', function () {
+        $(this).closest('form').submit();
     });
 
     // ------------------------------------------------------------------

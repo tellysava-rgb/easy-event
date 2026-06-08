@@ -1,9 +1,26 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit;
 
-// Helper: klickbarer Platzhalter
-function ee_ph( $tag ) {
-    return '<code class="ee-placeholder" data-value="' . esc_attr( $tag ) . '" title="Klicken zum Einfügen">' . esc_html( $tag ) . '</code>';
-}
+// Feldzugriffe auf $event sicher kapseln – für PHP 8.x, wo null->property einen Error wirft
+$v = (object) array(
+    'id'                         => $event ? (int)    $event->id                                         : 0,
+    'title'                      => $event ?          $event->title                                      : '',
+    'event_date'                 => $event ?          $event->event_date                                 : '',
+    'description'                => $event ?        ( $event->description                ?? '' )         : '',
+    'has_groups'                 => $event ? (int)    $event->has_groups                                 : 1,
+    'has_presale'                => $event ? (int)    $event->has_presale                                : 1,
+    'allow_duplicate_email'      => $event ? (int)    $event->allow_duplicate_email                      : 1,
+    'registration_deadline_date' => $event ?        ( $event->registration_deadline_date ?? '' )         : '',
+    'registration_deadline_time' => $event ?   substr( $event->registration_deadline_time ?? '', 0, 5 )  : '',
+    'presale_date'               => $event ?        ( $event->presale_date               ?? '' )         : '',
+    'presale_time'               => $event ?   substr( $event->presale_time              ?? '', 0, 5 )   : '',
+    'presale_message'            => $event ?        ( $event->presale_message            ?? '' )         : '',
+    'sold_out_message'           => $event ?        ( $event->sold_out_message           ?? '' )         : '',
+    'admin_email'                => $event ?        ( $event->admin_email                ?? '' )         : '',
+    'sender_name'                => $event ?        ( $event->sender_name                ?? '' )         : '',
+    'sender_email'               => $event ?        ( $event->sender_email               ?? '' )         : '',
+    'confirmation_subject'       => $event ?        ( $event->confirmation_subject       ?? '' )         : '',
+    'confirmation_text'          => $event ?        ( $event->confirmation_text          ?? '' )         : '',
+);
 ?>
 <div class="wrap">
     <h1><?php echo $event ? 'Event bearbeiten' : 'Neuen Event erstellen'; ?></h1>
@@ -36,15 +53,17 @@ function ee_ph( $tag ) {
 
     <form method="post" action="" id="easy-event-form" novalidate>
         <?php wp_nonce_field( 'easy_event_save_event' ); ?>
-        <input type="hidden" name="event_id" value="<?php echo $event ? (int) $event->id : 0; ?>">
-        <input type="hidden" name="ee_next_tab" id="ee-next-tab" value="">
+        <input type="hidden" name="event_id" value="<?php echo $v->id; ?>">
+<input type="hidden" name="easy_event_save_event" value="1">
+
+        <div id="ee-ajax-notice" class="notice is-dismissible" style="display:none; margin:0 0 16px"></div>
 
         <!-- Tab-Navigation -->
         <div id="ee-tabs">
             <ul class="ee-tab-nav">
                 <li><a href="#ee-tab-details" class="ee-tab-link active">① Event-Details</a></li>
-                <li id="ee-tab-nav-groups"  <?php if ( ! ( isset( $event->has_groups  ) ? $event->has_groups  : 1 ) ) echo 'style="display:none"'; ?>><a href="#ee-tab-groups"  class="ee-tab-link">② Gruppen</a></li>
-                <li id="ee-tab-nav-presale" <?php if ( ! ( isset( $event->has_presale ) ? $event->has_presale : 1 ) ) echo 'style="display:none"'; ?>><a href="#ee-tab-presale" class="ee-tab-link">③ Vorverkauf</a></li>
+                <li id="ee-tab-nav-groups"  <?php if ( ! $v->has_groups  ) echo 'style="display:none"'; ?>><a href="#ee-tab-groups"  class="ee-tab-link">② Gruppen</a></li>
+                <li id="ee-tab-nav-presale" <?php if ( ! $v->has_presale ) echo 'style="display:none"'; ?>><a href="#ee-tab-presale" class="ee-tab-link">③ Vorverkauf</a></li>
                 <li><a href="#ee-tab-email"   class="ee-tab-link">④ E-Mail</a></li>
             </ul>
 
@@ -57,7 +76,7 @@ function ee_ph( $tag ) {
                         <th scope="row"><label for="ee-event-date">Event-Datum <span class="required">*</span></label></th>
                         <td>
                             <input type="date" id="ee-event-date" name="event_date"
-                                   required value="<?php echo esc_attr( $event->event_date ?? '' ); ?>">
+                                   required value="<?php echo esc_attr( $v->event_date ); ?>">
                             <span class="ee-field-hint"></span>
                         </td>
                     </tr>
@@ -65,9 +84,9 @@ function ee_ph( $tag ) {
                         <th scope="row"><label for="ee-title">Titel <span class="required">*</span></label></th>
                         <td>
                             <input type="text" id="ee-title" name="title" class="regular-text"
-                                   required value="<?php echo esc_attr( $event->title ?? '' ); ?>">
+                                   required value="<?php echo esc_attr( $v->title ); ?>">
                             <span class="ee-field-hint"></span>
-                            <p class="description">Platzhalter: <?php echo ee_ph('{event_datum}'); ?></p>
+                            <p class="description">Platzhalter: <?php echo Easy_Event_Admin::ee_ph('{event_datum}'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -75,7 +94,7 @@ function ee_ph( $tag ) {
                         <td>
                             <?php
                             wp_editor(
-                                $event->description ?? '',
+                                $v->description,
                                 'easy_event_description',
                                 array(
                                     'textarea_name' => 'description',
@@ -85,7 +104,7 @@ function ee_ph( $tag ) {
                                 )
                             );
                             ?>
-                            <p class="description">Platzhalter: <?php echo ee_ph('{event_datum}'); ?></p>
+                            <p class="description">Platzhalter: <?php echo Easy_Event_Admin::ee_ph('{event_datum}'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -93,7 +112,7 @@ function ee_ph( $tag ) {
                         <td>
                             <label>
                                 <input type="checkbox" name="has_groups" id="ee-has-groups" value="1"
-                                    <?php checked( isset( $event->has_groups ) ? $event->has_groups : 1 ); ?>>
+                                    <?php checked( $v->has_groups ); ?>>
                                 Dieses Event hat Gruppen
                             </label>
                             <p class="description">Aktiviert den Gruppen-Tab und die Gruppenauswahl und Anzahlkontingent pro Gruppe im Anmeldeformular.</p>
@@ -104,7 +123,7 @@ function ee_ph( $tag ) {
                         <td>
                             <label>
                                 <input type="checkbox" name="has_presale" id="ee-has-presale" value="1"
-                                    <?php checked( isset( $event->has_presale ) ? $event->has_presale : 1 ); ?>>
+                                    <?php checked( $v->has_presale ); ?>>
                                 Dieses Event hat einen Vorverkaufsstart
                             </label>
                             <p class="description">Aktiviert den Vorverkauf-Tab. Ohne Vorverkauf ist das Formular sofort offen.</p>
@@ -115,7 +134,7 @@ function ee_ph( $tag ) {
                         <td>
                             <label>
                                 <input type="checkbox" name="allow_duplicate_email" value="1"
-                                    <?php checked( ! isset( $event->allow_duplicate_email ) || $event->allow_duplicate_email ); ?>>
+                                    <?php checked( $v->allow_duplicate_email ); ?>>
                                 Dieselbe E-Mail-Adresse darf mehrfach für dieses Event angemeldet werden
                             </label>
                             <p class="description">
@@ -128,9 +147,9 @@ function ee_ph( $tag ) {
                         <th scope="row"><label for="ee-deadline-date">Anmeldeschluss</label></th>
                         <td>
                             <input type="date" id="ee-deadline-date" name="registration_deadline_date"
-                                   value="<?php echo esc_attr( $event->registration_deadline_date ?? '' ); ?>">
+                                   value="<?php echo esc_attr( $v->registration_deadline_date ); ?>">
                             <input type="time" id="ee-deadline-time" name="registration_deadline_time"
-                                   value="<?php echo esc_attr( substr( $event->registration_deadline_time ?? '', 0, 5 ) ); ?>">
+                                   value="<?php echo esc_attr( $v->registration_deadline_time ); ?>">
                             <p class="description">Optional. Nach diesem Zeitpunkt ist keine Anmeldung mehr möglich. Uhrzeit leer = 23:59.</p>
                         </td>
                     </tr>
@@ -152,8 +171,7 @@ function ee_ph( $tag ) {
                     <thead>
                         <tr>
                             <th style="width:90px">Gruppe Nr. <span class="required">*</span></th>
-                            <th style="width:110px">Startzeit</th>
-                            <th>Gruppenleiter</th>
+                            <th>Beschreibung</th>
                             <th style="width:150px">Max. Teilnehmer <span class="required">*</span></th>
                             <th style="width:100px">Aktion</th>
                         </tr>
@@ -167,11 +185,8 @@ function ee_ph( $tag ) {
                                            value="<?php echo (int) $group->group_number; ?>"
                                            min="1" class="small-text" required>
                                 </td>
-                                <td><input type="text" name="groups[<?php echo $idx; ?>][start_time]"
-                                           value="<?php echo esc_attr( $group->start_time ); ?>"
-                                           placeholder="10:00" class="small-text"></td>
-                                <td><input type="text" name="groups[<?php echo $idx; ?>][leader]"
-                                           value="<?php echo esc_attr( $group->leader ); ?>"
+                                <td><input type="text" name="groups[<?php echo $idx; ?>][description]"
+                                           value="<?php echo esc_attr( $group->description ?? '' ); ?>"
                                            class="regular-text"></td>
                                 <td><input type="number" name="groups[<?php echo $idx; ?>][max_tickets]"
                                            value="<?php echo (int) $group->max_tickets; ?>"
@@ -201,7 +216,7 @@ function ee_ph( $tag ) {
                         <th scope="row"><label for="ee-presale-date">Datum Vorverkauf <span class="required">*</span></label></th>
                         <td>
                             <input type="date" id="ee-presale-date" name="presale_date"
-                                   required value="<?php echo esc_attr( $event->presale_date ?? '' ); ?>">
+                                   required value="<?php echo esc_attr( $v->presale_date ); ?>">
                             <span class="ee-field-hint"></span>
                         </td>
                     </tr>
@@ -209,21 +224,21 @@ function ee_ph( $tag ) {
                         <th scope="row"><label for="ee-presale-time">Uhrzeit Vorverkauf <span class="required">*</span></label></th>
                         <td>
                             <input type="time" id="ee-presale-time" name="presale_time"
-                                   required value="<?php echo esc_attr( substr( $event->presale_time ?? '', 0, 5 ) ); ?>">
+                                   required value="<?php echo esc_attr( $v->presale_time ); ?>">
                             <span class="ee-field-hint"></span>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="ee-presale-msg">Nachricht vor Vorverkauf</label></th>
                         <td>
-                            <textarea id="ee-presale-msg" name="presale_message" class="large-text" rows="3"><?php echo esc_textarea( $event->presale_message ?? 'Der Vorverkauf startet am {datum} um {uhrzeit}' ); ?></textarea>
-                            <p class="description">Platzhalter: <?php echo ee_ph('{datum}'); ?> <?php echo ee_ph('{uhrzeit}'); ?></p>
+                            <textarea id="ee-presale-msg" name="presale_message" class="large-text" rows="3"><?php echo esc_textarea( $v->presale_message ?: 'Der Vorverkauf startet am {datum} um {uhrzeit}' ); ?></textarea>
+                            <p class="description">Platzhalter: <?php echo Easy_Event_Admin::ee_ph('{datum}'); ?> <?php echo Easy_Event_Admin::ee_ph('{uhrzeit}'); ?></p>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="ee-soldout-msg">Nachricht wenn ausverkauft</label></th>
                         <td>
-                            <textarea id="ee-soldout-msg" name="sold_out_message" class="large-text" rows="3"><?php echo esc_textarea( $event->sold_out_message ?? 'Leider sind alle Tickets ausverkauft. Schade, vielleicht beim nächsten Mal.' ); ?></textarea>
+                            <textarea id="ee-soldout-msg" name="sold_out_message" class="large-text" rows="3"><?php echo esc_textarea( $v->sold_out_message ?: 'Leider sind alle Tickets ausverkauft. Schade, vielleicht beim nächsten Mal.' ); ?></textarea>
                         </td>
                     </tr>
                 </table>
@@ -244,14 +259,14 @@ function ee_ph( $tag ) {
                             <input type="email" id="ee-admin-email" name="admin_email" class="regular-text"
                                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                                    title="Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch)"
-                                   value="<?php echo esc_attr( $event->admin_email ?? '' ); ?>">
+                                   value="<?php echo esc_attr( $v->admin_email ); ?>">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="ee-sender-name">Absender Name</label></th>
                         <td>
                             <input type="text" id="ee-sender-name" name="sender_name" class="regular-text"
-                                   value="<?php echo esc_attr( $event->sender_name ?? '' ); ?>">
+                                   value="<?php echo esc_attr( $v->sender_name ); ?>">
                         </td>
                     </tr>
                     <tr>
@@ -260,28 +275,28 @@ function ee_ph( $tag ) {
                             <input type="email" id="ee-sender-email" name="sender_email" class="regular-text"
                                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                                    title="Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch)"
-                                   value="<?php echo esc_attr( $event->sender_email ?? '' ); ?>">
+                                   value="<?php echo esc_attr( $v->sender_email ); ?>">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="ee-conf-subject">Betreff Bestätigungs-E-Mail</label></th>
                         <td>
                             <input type="text" id="ee-conf-subject" name="confirmation_subject" class="regular-text"
-                                   value="<?php echo esc_attr( $event->confirmation_subject ?? '' ); ?>">
+                                   value="<?php echo esc_attr( $v->confirmation_subject ); ?>">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="ee-conf-text">Text Bestätigungs-E-Mail</label></th>
                         <td>
                             <?php
-                            $default_conf_text = "Hallo {name}\n\nDu hast dir gerade {tickets} Ticket/s für die Gruppe {gruppe_nr} um {startzeit} für {event_titel} am {event_datum} gekauft.\n\nDu bist in der Gruppe mit {gruppenleiter}\n\nSuper bist du dabei.\nWir sehen uns.";
+                            $default_conf_text = "Hallo {name}\n\nDu hast dich gerade für {event_titel} angemeldet\n\nSuper bist du dabei.\nWir sehen uns.";
                             ?>
-                            <textarea id="ee-conf-text" name="confirmation_text" class="large-text" rows="8"><?php echo esc_textarea( $event->confirmation_text ?? $default_conf_text ); ?></textarea>
+                            <textarea id="ee-conf-text" name="confirmation_text" class="large-text" rows="8"><?php echo esc_textarea( $v->confirmation_text ?: $default_conf_text ); ?></textarea>
                             <p class="description">
                                 Platzhalter:
                                 <?php
-                                foreach ( ['{name}','{email}','{tickets}','{gruppe_nr}','{startzeit}','{gruppenleiter}','{event_titel}','{event_datum}'] as $ph ) {
-                                    echo ee_ph( $ph ) . ' ';
+                                foreach ( ['{name}','{email}','{tickets}','{gruppe_nr}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) {
+                                    echo Easy_Event_Admin::ee_ph( $ph ) . ' ';
                                 }
                                 ?>
                             </p>
@@ -306,7 +321,7 @@ function ee_ph( $tag ) {
 
                 <div class="ee-tab-buttons">
                     <button type="button" class="button ee-tab-prev">← Zurück</button>
-                    <input type="submit" name="easy_event_save_event" class="button-primary" value="Event speichern">
+                    <input type="submit" class="button-primary" value="Event speichern">
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=easy-event' ) ); ?>" class="button">Abbrechen</a>
                 </div>
             </div>
@@ -320,7 +335,7 @@ function ee_ph( $tag ) {
         <p>
             Shortcode für diese Seite:
             <code style="font-size:14px; padding:4px 10px; background:#f0f0f0">
-                [easy_event id="<?php echo (int) $event->id; ?>"]
+                [easy_event id="<?php echo $v->id; ?>"]
             </code>
         </p>
     </div>
