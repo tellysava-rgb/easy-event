@@ -28,6 +28,7 @@ build/
 .env.*
 CODE-REVIEW.md
 checklist.md
+checkliste.md
 
 
 # PHP
