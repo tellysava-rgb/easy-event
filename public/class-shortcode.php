@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Easy_Event_Shortcode {
 
+    const MAX_TICKETS = 15;
+
     public static function init() {
         add_shortcode( 'easy_event', array( __CLASS__, 'render' ) );
         add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
@@ -14,6 +16,10 @@ class Easy_Event_Shortcode {
     // ------------------------------------------------------------------
 
     public static function enqueue_assets() {
+        global $post;
+        if ( ! is_singular() || ! is_a( $post, 'WP_Post' ) || ! has_shortcode( $post->post_content, 'easy_event' ) ) {
+            return;
+        }
         wp_enqueue_style(
             'easy-event-public',
             EASY_EVENT_URL . 'assets/css/public.css',
@@ -56,7 +62,7 @@ class Easy_Event_Shortcode {
                 : home_url( $_SERVER['REQUEST_URI'] );
             $transient_key = 'ee_err_' . md5( uniqid( '', true ) );
             set_transient( $transient_key, array(
-                'errors' => array( 'Das Formular wurde bereits abgeschickt oder ist abgelaufen. Bitte lade die Seite neu und versuche es erneut.' ),
+                'errors' => array( array( 'field' => 'general', 'message' => __( 'Das Formular wurde bereits abgeschickt oder ist abgelaufen. Bitte lade die Seite neu und versuche es erneut.', 'easy-event' ) ) ),
                 'data'   => array(),
             ), 1800 );
             wp_safe_redirect( add_query_arg( 'ee_error', $transient_key, $current_url ) );
@@ -69,49 +75,47 @@ class Easy_Event_Shortcode {
         $group_id = absint( $_POST['group_id']  ?? 0 );
         $name     = sanitize_text_field( $_POST['name']    ?? '' );
         $email    = sanitize_email(      $_POST['email']   ?? '' );
-        $tickets  = max( 1, min( 15, absint( $_POST['tickets'] ?? 1 ) ) );
+        $tickets  = max( 1, min( self::MAX_TICKETS, absint( $_POST['tickets'] ?? 1 ) ) );
 
         $errors = array();
 
         if ( empty( $name ) )
-            $errors[] = 'Name: Dieses Feld darf nicht leer sein.';
+            $errors[] = array( 'field' => 'name',  'message' => __( 'Dieses Feld darf nicht leer sein.', 'easy-event' ) );
         if ( empty( trim( $_POST['email'] ?? '' ) ) )
-            $errors[] = 'E-Mail: Dieses Feld darf nicht leer sein.';
+            $errors[] = array( 'field' => 'email', 'message' => __( 'Dieses Feld darf nicht leer sein.', 'easy-event' ) );
         elseif ( ! is_email( $email ) )
-            $errors[] = 'E-Mail: Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch).';
+            $errors[] = array( 'field' => 'email', 'message' => __( 'Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch).', 'easy-event' ) );
 
         // Event laden – wird für alle weiteren Prüfungen benötigt
         if ( $event_id ) {
             $event = Easy_Event_Database::get_event( $event_id );
             // Gruppe nur prüfen wenn Event Gruppen hat
             if ( $event && $event->has_groups && ! $group_id )
-                $errors[] = 'Gruppe: Bitte eine Gruppe auswählen.';
+                $errors[] = array( 'field' => 'group_id', 'message' => __( 'Bitte eine Gruppe auswählen.', 'easy-event' ) );
             if ( ! $event ) {
-                $errors[] = 'Event nicht gefunden.';
+                $errors[] = array( 'field' => 'general', 'message' => __( 'Event nicht gefunden.', 'easy-event' ) );
             } else {
                 $now = current_datetime()->getTimestamp();
 
-                // Vorverkaufsstart nur prüfen wenn aktiviert
-                if ( $event->has_presale ) {
-                    $presale_ts = strtotime( $event->presale_date . ' ' . $event->presale_time );
-                    if ( $presale_ts === false ) {
-                        $errors[] = 'Ungültiges Vorverkaufsdatum. Bitte den Admin kontaktieren.';
-                    } elseif ( $now < $presale_ts ) {
-                        $errors[] = 'Der Vorverkauf hat noch nicht begonnen.';
+                // Vorverkaufsstart nur prüfen wenn aktiviert und Datum gesetzt
+                if ( $event->has_presale && ! empty( $event->presale_date ) ) {
+                    $presale_dt = new DateTimeImmutable( $event->presale_date . ' ' . ( $event->presale_time ?: '00:00' ), wp_timezone() );
+                    if ( $now < $presale_dt->getTimestamp() ) {
+                        $errors[] = array( 'field' => 'general', 'message' => __( 'Der Vorverkauf hat noch nicht begonnen.', 'easy-event' ) );
                     }
                 }
 
                 // Anmeldeschluss prüfen
                 if ( ! empty( $event->registration_deadline_date ) ) {
                     $time_part   = ! empty( $event->registration_deadline_time ) ? $event->registration_deadline_time : '23:59';
-                    $deadline_ts = strtotime( $event->registration_deadline_date . ' ' . $time_part );
-                    if ( $deadline_ts !== false && $now > $deadline_ts ) {
-                        $errors[] = 'Die Anmeldefrist ist abgelaufen.';
+                    $deadline_dt = new DateTimeImmutable( $event->registration_deadline_date . ' ' . $time_part, wp_timezone() );
+                    if ( $now > $deadline_dt->getTimestamp() ) {
+                        $errors[] = array( 'field' => 'general', 'message' => __( 'Die Anmeldefrist ist abgelaufen.', 'easy-event' ) );
                     }
                 }
             }
         } else {
-            $errors[] = 'Ungültige Anfrage.';
+            $errors[] = array( 'field' => 'general', 'message' => __( 'Ungültige Anfrage.', 'easy-event' ) );
         }
 
         // Check ticket availability (nur bei Gruppen-Events)
@@ -119,9 +123,9 @@ class Easy_Event_Shortcode {
             $remaining = Easy_Event_Database::get_group_remaining_tickets( $group_id );
             if ( $tickets > $remaining ) {
                 if ( $remaining === 0 ) {
-                    $errors[] = 'Diese Gruppe ist leider ausverkauft.';
+                    $errors[] = array( 'field' => 'general', 'message' => __( 'Diese Gruppe ist leider ausverkauft.', 'easy-event' ) );
                 } else {
-                    $errors[] = 'Es sind nur noch ' . $remaining . ' Ticket(s) für diese Gruppe verfügbar.';
+                    $errors[] = array( 'field' => 'general', 'message' => sprintf( __( 'Es sind nur noch %d Ticket(s) für diese Gruppe verfügbar.', 'easy-event' ), $remaining ) );
                 }
             }
         }
@@ -133,7 +137,13 @@ class Easy_Event_Shortcode {
 
         if ( ! empty( $errors ) ) {
             $transient_key = 'ee_err_' . md5( uniqid( '', true ) );
-            set_transient( $transient_key, array( 'errors' => $errors, 'data' => $_POST ), 1800 );
+            $safe_post = array(
+                'name'     => sanitize_text_field( $_POST['name']     ?? '' ),
+                'email'    => sanitize_email(      $_POST['email']    ?? '' ),
+                'group_id' => absint(              $_POST['group_id'] ?? 0 ),
+                'tickets'  => absint(              $_POST['tickets']  ?? 1 ),
+            );
+            set_transient( $transient_key, array( 'errors' => $errors, 'data' => $safe_post ), 1800 );
             wp_safe_redirect( add_query_arg( 'ee_error', $transient_key, $current_url ) );
             exit;
         }
@@ -150,7 +160,13 @@ class Easy_Event_Shortcode {
         // Fehler aus der Transaktion (z.B. Überverkauf durch Race Condition)
         if ( is_wp_error( $result ) ) {
             $transient_key = 'ee_err_' . md5( uniqid( '', true ) );
-            set_transient( $transient_key, array( 'errors' => array( $result->get_error_message() ), 'data' => $_POST ), 1800 );
+            $safe_post = array(
+                'name'     => sanitize_text_field( $_POST['name']     ?? '' ),
+                'email'    => sanitize_email(      $_POST['email']    ?? '' ),
+                'group_id' => absint(              $_POST['group_id'] ?? 0 ),
+                'tickets'  => absint(              $_POST['tickets']  ?? 1 ),
+            );
+            set_transient( $transient_key, array( 'errors' => array( array( 'field' => 'general', 'message' => $result->get_error_message() ) ), 'data' => $safe_post ), 1800 );
             wp_safe_redirect( add_query_arg( 'ee_error', $transient_key, $current_url ) );
             exit;
         }
@@ -160,7 +176,7 @@ class Easy_Event_Shortcode {
         $event        = Easy_Event_Database::get_event( $event_id );
         $group        = Easy_Event_Database::get_group( $group_id );
 
-        if ( $registration && $event && $group ) {
+        if ( $registration && $event ) {
             Easy_Event_Email::send_confirmation( $registration, $event, $group );
             Easy_Event_Email::send_admin_notification( $registration, $event, $group );
         }
@@ -181,20 +197,22 @@ class Easy_Event_Shortcode {
         $event_id = absint( $atts['id'] );
 
         if ( ! $event_id ) {
-            return '<p class="easy-event-notice easy-event-error">Kein Event angegeben. Beispiel: <code>[easy_event id="1"]</code></p>';
+            return '<p class="easy-event-notice easy-event-error">' . esc_html__( 'Kein Event angegeben. Beispiel:', 'easy-event' ) . ' <code>[easy_event id="1"]</code></p>';
         }
 
         $event = Easy_Event_Database::get_event( $event_id );
         if ( ! $event ) {
-            return '<p class="easy-event-notice easy-event-error">Event nicht gefunden.</p>';
+            return '<p class="easy-event-notice easy-event-error">' . esc_html__( 'Event nicht gefunden.', 'easy-event' ) . '</p>';
         }
 
         ob_start();
 
-        // Zeiten in lokaler WP-Zeitzone gespeichert → current_time('timestamp') konsistent
-        $presale_ts = ( $event->has_presale && ! empty( $event->presale_date ) )
-            ? (int) strtotime( $event->presale_date . ' ' . $event->presale_time )
-            : 0;
+        $presale_ts = 0;
+        $presale_dt = null;
+        if ( $event->has_presale && ! empty( $event->presale_date ) ) {
+            $presale_dt = new DateTimeImmutable( $event->presale_date . ' ' . ( $event->presale_time ?: '00:00' ), wp_timezone() );
+            $presale_ts = $presale_dt->getTimestamp();
+        }
         $now = current_datetime()->getTimestamp();
 
         echo '<div class="easy-event-wrap" data-event-id="' . (int) $event_id . '">';
@@ -209,7 +227,7 @@ class Easy_Event_Shortcode {
         echo '<div class="easy-event-header">';
         echo '<h2 class="easy-event-title">' . esc_html( $display_title ) . '</h2>';
         if ( ! empty( $display_desc ) ) {
-            echo '<div class="easy-event-description">' . wp_kses_post( $display_desc ) . '</div>';
+            echo '<div class="easy-event-description">' . wp_kses_post( wpautop( $display_desc ) ) . '</div>';
         }
         echo '</div>';
 
@@ -217,8 +235,8 @@ class Easy_Event_Shortcode {
         $deadline_passed = false;
         if ( ! empty( $event->registration_deadline_date ) ) {
             $dl_time     = ! empty( $event->registration_deadline_time ) ? $event->registration_deadline_time : '23:59';
-            $deadline_ts = strtotime( $event->registration_deadline_date . ' ' . $dl_time );
-            if ( $deadline_ts !== false && $now > $deadline_ts ) {
+            $deadline_dt = new DateTimeImmutable( $event->registration_deadline_date . ' ' . $dl_time, wp_timezone() );
+            if ( $now > $deadline_dt->getTimestamp() ) {
                 $deadline_passed = true;
             }
         }
@@ -244,15 +262,15 @@ class Easy_Event_Shortcode {
                 );
                 echo '<p>' . esc_html( $msg ) . '</p>';
             } else {
-                echo '<p>Vorverkauf startet am <strong>' . esc_html( $presale_label ) . '</strong>.</p>';
+                echo '<p>' . sprintf( esc_html__( 'Vorverkauf startet am %s.', 'easy-event' ), '<strong>' . esc_html( $presale_label ) . '</strong>' ) . '</p>';
             }
-            $iso = date( 'Y-m-d', strtotime( $event->presale_date ) ) . 'T' . substr( $event->presale_time, 0, 5 ) . ':00';
+            $iso = $presale_dt->format( 'Y-m-d\TH:i:sP' );
             echo '<p class="easy-event-countdown" data-presale="' . esc_attr( $iso ) . '"></p>';
             echo '</div>';
 
         } elseif ( $deadline_passed ) {
             // ---- Anmeldeschluss überschritten ----
-            echo '<div class="easy-event-notice easy-event-error"><p>Die Anmeldefrist für dieses Event ist abgelaufen.</p></div>';
+            echo '<div class="easy-event-notice easy-event-error"><p>' . esc_html__( 'Die Anmeldefrist für dieses Event ist abgelaufen.', 'easy-event' ) . '</p></div>';
 
         } else {
             // ---- Registration form or sold out ----
@@ -260,7 +278,7 @@ class Easy_Event_Shortcode {
             if ( $event->has_groups && Easy_Event_Database::is_event_sold_out( $event_id ) ) {
                 $msg = ! empty( $event->sold_out_message )
                     ? $event->sold_out_message
-                    : 'Die Veranstaltung ist ausverkauft.';
+                    : __( 'Die Veranstaltung ist ausverkauft.', 'easy-event' );
                 echo '<div class="easy-event-notice easy-event-sold-out"><p>' . esc_html( $msg ) . '</p></div>';
             } else {
 
@@ -275,7 +293,7 @@ class Easy_Event_Shortcode {
                 }
                 if ( $show_success ) {
                     echo '<div class="easy-event-notice easy-event-success">';
-                    echo '<p>Deine Anmeldung wurde erfolgreich registriert.</p>';
+                    echo '<p>' . esc_html__( 'Deine Anmeldung wurde erfolgreich registriert.', 'easy-event' ) . '</p>';
                     echo '</div>';
                 }
 

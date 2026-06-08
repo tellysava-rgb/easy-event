@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
 Tested with PHP: 8.3.5
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,6 +51,9 @@ Das Plugin verwendet MySQL-Transaktionen mit Row-Level-Locking. Überverkäufe s
 Das ist pro Event konfigurierbar. In den Event-Einstellungen (Tab „Event-Details") gibt es eine entsprechende Checkbox.
 
 == Changelog ==
+
+= 1.2.2 =
+* Fix: Zeilenumbrüche in der Event-Beschreibung werden auf der Website korrekt angezeigt (wpautop)
 
 = 1.2.1 =
 * Verbesserung: Beschreibungsfeld bei Gruppen füllt jetzt die volle Spaltenbreite
