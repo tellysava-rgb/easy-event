@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Easy_Event_Database {
 
     const DB_VERSION_OPTION = 'easy_event_db_version';
-    const DB_VERSION        = '1.4';
+    const DB_VERSION        = '1.5';
 
     // ------------------------------------------------------------------
     // Installation & Updates
@@ -67,6 +67,12 @@ class Easy_Event_Database {
             $wpdb->query( "ALTER TABLE {$wpdb->prefix}easy_event_events MODIFY COLUMN presale_time time DEFAULT NULL" );
         }
 
+        // v1.5: admin_notification_text
+        $col = $wpdb->get_results( "SHOW COLUMNS FROM {$wpdb->prefix}easy_event_events LIKE 'admin_notification_text'" );
+        if ( empty( $col ) ) {
+            $wpdb->query( "ALTER TABLE {$wpdb->prefix}easy_event_events ADD COLUMN admin_notification_text longtext" );
+        }
+
         // v1.4: Groups-Tabelle: start_time / leader entfernt, description hinzugefügt
         $col = $wpdb->get_results( "SHOW COLUMNS FROM {$wpdb->prefix}easy_event_groups LIKE 'description'" );
         if ( empty( $col ) ) {
@@ -106,6 +112,7 @@ class Easy_Event_Database {
             sender_email varchar(255) DEFAULT '',
             confirmation_subject varchar(255) DEFAULT '',
             confirmation_text longtext,
+            admin_notification_text longtext,
             allow_duplicate_email tinyint(1) NOT NULL DEFAULT 1,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id)
@@ -199,9 +206,10 @@ class Easy_Event_Database {
             'sender_email'               => is_email( $data['sender_email'] ?? '' ) ? sanitize_email( $data['sender_email'] ) : '',
             'confirmation_subject'       => sanitize_text_field( $data['confirmation_subject'] ?? '' ),
             'confirmation_text'          => sanitize_textarea_field( $data['confirmation_text'] ?? '' ),
+            'admin_notification_text'    => sanitize_textarea_field( $data['admin_notification_text'] ?? '' ),
             'allow_duplicate_email'      => ! empty( $data['allow_duplicate_email'] ) ? 1 : 0,
         );
-        $formats = array( '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );
+        $formats = array( '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );
 
         $id = absint( $data['id'] ?? 0 );
         if ( $id ) {

@@ -20,6 +20,7 @@ $v = (object) array(
     'sender_email'               => $event ?        ( $event->sender_email               ?? '' )         : '',
     'confirmation_subject'       => $event ?        ( $event->confirmation_subject       ?? '' )         : '',
     'confirmation_text'          => $event ?        ( $event->confirmation_text          ?? '' )         : '',
+    'admin_notification_text'    => $event ?        ( $event->admin_notification_text    ?? '' )         : '',
 );
 ?>
 <div class="wrap">
@@ -310,7 +311,24 @@ $v = (object) array(
                             <p class="description">
                                 Platzhalter:
                                 <?php
-                                foreach ( ['{name}','{email}','{personen}','{gruppe_nr}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) {
+                                foreach ( ['{name}','{email}','{anzahl_personen}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) {
+                                    echo Easy_Event_Admin::ee_ph( $ph ) . ' ';
+                                }
+                                ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="ee-admin-notif-text">Text Bestätigung an Admin E-Mail</label></th>
+                        <td>
+                            <?php
+                            $default_admin_text = "Hallo\n\nEs wurde gerade eine neue Anmeldung registriert für {event_titel}.\n\nName: {name}\nEmail: {email}\nAnzahl Tickets: {anzahl_personen}\nGruppe: {gruppe_beschreibung}";
+                            ?>
+                            <textarea id="ee-admin-notif-text" name="admin_notification_text" class="large-text" rows="8"><?php echo esc_textarea( $v->admin_notification_text ?: $default_admin_text ); ?></textarea>
+                            <p class="description">
+                                Platzhalter:
+                                <?php
+                                foreach ( ['{name}','{email}','{anzahl_personen}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) {
                                     echo Easy_Event_Admin::ee_ph( $ph ) . ' ';
                                 }
                                 ?>

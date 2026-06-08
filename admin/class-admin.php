@@ -177,6 +177,7 @@ class Easy_Event_Admin {
             'sender_email'                => $_POST['sender_email']                       ?? '',
             'confirmation_subject'        => $_POST['confirmation_subject']               ?? '',
             'confirmation_text'           => $_POST['confirmation_text']                  ?? '',
+            'admin_notification_text'     => $_POST['admin_notification_text']            ?? '',
             'allow_duplicate_email'       => $_POST['allow_duplicate_email']              ?? '',
         );
 
@@ -269,8 +270,9 @@ class Easy_Event_Admin {
             'admin_email'                => sanitize_email( $_POST['admin_email']               ?? '' ),
             'sender_name'                => sanitize_text_field( $_POST['sender_name']              ?? '' ),
             'sender_email'               => sanitize_email( $_POST['sender_email']              ?? '' ),
-            'confirmation_subject'       => sanitize_text_field( $_POST['confirmation_subject']     ?? '' ),
-            'confirmation_text'          => sanitize_textarea_field( $_POST['confirmation_text']        ?? '' ),
+            'confirmation_subject'       => sanitize_text_field( $_POST['confirmation_subject']        ?? '' ),
+            'confirmation_text'          => sanitize_textarea_field( $_POST['confirmation_text']           ?? '' ),
+            'admin_notification_text'    => sanitize_textarea_field( $_POST['admin_notification_text']     ?? '' ),
             'allow_duplicate_email'      => isset( $_POST['allow_duplicate_email'] )    ? 1 : 0,
         );
     }

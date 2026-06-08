@@ -29,25 +29,20 @@ class Easy_Event_Email {
     public static function send_admin_notification( $registration, $event, $group ) {
         if ( empty( $event->admin_email ) ) return false;
 
-        $gruppe_info = $group
-            ? 'Gruppe ' . $group->group_number . ( ! empty( $group->description ) ? ' – ' . $group->description : '' )
-            : '–';
+        $default_text = "Hallo\n\nEs wurde gerade eine neue Anmeldung registriert für {event_titel}.\n\nName: {name}\nEmail: {email}\nAnzahl Tickets: {anzahl_personen}\nGruppe: {gruppe_beschreibung}";
+        $body_raw = ! empty( $event->admin_notification_text )
+            ? $event->admin_notification_text
+            : $default_text;
 
         $to      = $event->admin_email;
         $subject = 'Neue Anmeldung: ' . $event->title;
-        $body    = 'Neue Anmeldung für: ' . $event->title . "\n\n";
-        $body   .= 'Name:            ' . $registration->name    . "\n";
-        $body   .= 'E-Mail:          ' . $registration->email   . "\n";
-        $body   .= 'Gruppe:          ' . $gruppe_info           . "\n";
-        $body   .= 'Anzahl Personen: ' . $registration->tickets . "\n";
-        $body   .= 'Anmeldedatum:    ' . date_i18n( 'd.m.Y H:i', strtotime( $registration->created_at ) ) . "\n";
+        $body    = self::replace_placeholders( $body_raw, $registration, $event, $group );
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>',
+        );
 
-        $headers = array( 'Content-Type: text/plain; charset=UTF-8' );
-        if ( ! empty( $event->sender_email ) ) {
-            $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
-        }
-
-        return wp_mail( $to, $subject, $body, $headers );
+        return wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers );
     }
 
     /**
@@ -82,8 +77,8 @@ class Easy_Event_Email {
      * Replace all placeholders in a text string.
      *
      * Available placeholders:
-     *   {name}, {email}, {personen},
-     *   {gruppe_nr}, {gruppe_beschreibung},
+     *   {name}, {email}, {anzahl_personen},
+     *   {gruppe_beschreibung},
      *   {event_titel}, {event_datum}
      */
     private static function replace_placeholders( $text, $registration, $event, $group ) {
@@ -94,8 +89,7 @@ class Easy_Event_Email {
         $map = array(
             '{name}'                => $registration->name    ?? '',
             '{email}'               => $registration->email   ?? '',
-            '{personen}'            => $registration->tickets ?? '',
-            '{gruppe_nr}'           => $group ? ( $group->group_number ?? '' ) : '',
+            '{anzahl_personen}'     => $registration->tickets ?? '',
             '{gruppe_beschreibung}' => $group ? ( $group->description  ?? '' ) : '',
             '{event_titel}'         => $event->title          ?? '',
             '{event_datum}'         => $event_date,

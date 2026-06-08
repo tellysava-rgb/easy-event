@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
 Tested with PHP: 8.3.5
-Stable tag: 1.2.5
+Stable tag: 1.2.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,6 +51,12 @@ Das Plugin verwendet MySQL-Transaktionen mit Row-Level-Locking. Überverkäufe s
 Das ist pro Event konfigurierbar. In den Event-Einstellungen (Tab „Event-Details") gibt es eine entsprechende Checkbox.
 
 == Changelog ==
+
+= 1.2.6 =
+* Neu: Konfigurierbarer Admin-Benachrichtigungstext im E-Mail-Tab (mit Platzhaltern)
+* Umbenennung: Platzhalter {personen} → {anzahl_personen}
+* Entfernt: Platzhalter {gruppe_nr} (nicht mehr verwendet)
+* Datenbank: neue Spalte admin_notification_text (DB v1.5)
 
 = 1.2.5 =
 * Fix: Placeholder Admin E-Mail auf statischen Text «deine@email.com» geändert
