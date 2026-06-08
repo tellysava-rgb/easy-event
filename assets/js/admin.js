@@ -43,6 +43,45 @@ jQuery(function ($) {
     }());
 
     // ------------------------------------------------------------------
+    // Datums-Warnungen (nicht blockierend)
+    // ------------------------------------------------------------------
+    function checkDateWarnings() {
+        var eventDate   = $('#ee-event-date').val();
+        var deadlineDate = $('#ee-deadline-date').val();
+        var presaleDate  = $('#ee-presale-date').val();
+
+        // Warning: Event-Datum liegt in der Vergangenheit
+        if (eventDate) {
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (new Date(eventDate) < today) {
+                $('#ee-warn-event-date').text('Das Event Datum ist in der Vergangenheit.').show();
+            } else {
+                $('#ee-warn-event-date').hide();
+            }
+        } else {
+            $('#ee-warn-event-date').hide();
+        }
+
+        // Warning: Anmeldeschluss liegt nach dem Event-Datum
+        if (deadlineDate && eventDate && deadlineDate > eventDate) {
+            $('#ee-warn-deadline').text('Der Anmeldeschluss liegt nach dem Event-Datum.').show();
+        } else {
+            $('#ee-warn-deadline').hide();
+        }
+
+        // Warning: Datum Vorverkauf liegt nach dem Event-Datum
+        if (presaleDate && eventDate && presaleDate >= eventDate) {
+            $('#ee-warn-presale').text('Das Datum Vorverkaufs ist nach dem eigentlichen Event-Datum.').show();
+        } else {
+            $('#ee-warn-presale').hide();
+        }
+    }
+
+    $('#ee-event-date, #ee-deadline-date, #ee-presale-date').on('change', checkDateWarnings);
+    checkDateWarnings();
+
+    // ------------------------------------------------------------------
     // Validierung pro Tab
     // ------------------------------------------------------------------
 
@@ -77,7 +116,7 @@ jQuery(function ($) {
 
                     if (!$.trim($nr.val()) || parseInt($nr.val()) < 1) {
                         $nr.addClass('ee-input-error');
-                        groupError = 'Alle Gruppen brauchen eine gültige Gruppe Nr.';
+                        groupError = 'Alle Gruppen brauchen eine gültige Sortierung.';
                         valid = false;
                     }
                     if (!$.trim($max.val()) || parseInt($max.val()) < 1) {
@@ -275,7 +314,7 @@ jQuery(function ($) {
         var row = '<tr class="ee-group-row">' +
             '<td><input type="hidden" name="groups[' + i + '][id]" value="0">' +
             '<input type="number" name="groups[' + i + '][group_number]" value="' + (i + 1) + '" min="1" class="small-text" required></td>' +
-            '<td><input type="text" name="groups[' + i + '][description]" class="regular-text" style="width:100%"></td>' +
+            '<td><input type="text" name="groups[' + i + '][description]" style="width:100%"></td>' +
             '<td><input type="number" name="groups[' + i + '][max_tickets]" value="10" min="1" class="small-text" required></td>' +
             '<td><button type="button" class="button ee-remove-group">Entfernen</button></td>' +
             '</tr>';

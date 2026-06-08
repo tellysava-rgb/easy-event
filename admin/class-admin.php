@@ -194,6 +194,14 @@ class Easy_Event_Admin {
             if ( empty( $data['presale_time'] ) )
                 $required_errors[] = 'Tab «Vorverkauf»: Uhrzeit Vorverkauf ist erforderlich.';
         }
+        if ( empty( trim( $data['admin_email'] ) ) )
+            $required_errors[] = 'Tab «E-Mail»: Admin E-Mail ist erforderlich.';
+        if ( empty( trim( $data['sender_name'] ) ) )
+            $required_errors[] = 'Tab «E-Mail»: Absender Name ist erforderlich.';
+        if ( empty( trim( $data['sender_email'] ) ) )
+            $required_errors[] = 'Tab «E-Mail»: Absender E-Mail ist erforderlich.';
+        if ( empty( trim( $data['confirmation_subject'] ) ) )
+            $required_errors[] = 'Tab «E-Mail»: Betreff Bestätigungs-E-Mail ist erforderlich.';
 
         if ( ! empty( $required_errors ) ) {
             return new WP_Error( 'validation', implode( ' / ', $required_errors ) );

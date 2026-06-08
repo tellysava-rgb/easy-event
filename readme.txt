@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
 Tested with PHP: 8.3.5
-Stable tag: 1.2.3
+Stable tag: 1.2.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,6 +51,19 @@ Das Plugin verwendet MySQL-Transaktionen mit Row-Level-Locking. Überverkäufe s
 Das ist pro Event konfigurierbar. In den Event-Einstellungen (Tab „Event-Details") gibt es eine entsprechende Checkbox.
 
 == Changelog ==
+
+= 1.2.5 =
+* Fix: Placeholder Admin E-Mail auf statischen Text «deine@email.com» geändert
+
+= 1.2.4 =
+* Neu: Datumsvalidierungen mit Warnhinweisen (Event-Datum in Vergangenheit, Anmeldeschluss nach Event, Vorverkauf nach Event)
+* Mehrfachanmeldung-Checkbox standardmässig deaktiviert für neue Events
+* Verbesserung: Beschreibungsfeld in Gruppen-Tab füllt jetzt volle Spaltenbreite
+* Änderung: Standardtext «Ausverkauft»-Meldung auf «Leider sind alle Tickets ausverkauft.» gekürzt
+* Umbenennung: «Gruppe Nr.» → «Sortierung» im Gruppen-Tab
+* Änderung: Gruppen-Dropdown im Anmeldeformular zeigt nur noch die Beschreibung (keine Sortierungsnummer)
+* Neu: Alle E-Mail-Felder sind jetzt Pflichtfelder (inkl. serverseitiger Validierung)
+* Neu: Platzhaltertexte in E-Mail-Feldern (Admin-E-Mail, Absender Name/E-Mail, Betreff)
 
 = 1.2.3 =
 * Fix: Gruppen-Dropdown zeigt «Ausverkauft» statt «noch 0 Tickets» wenn keine Plätze mehr frei sind

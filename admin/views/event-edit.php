@@ -8,7 +8,7 @@ $v = (object) array(
     'description'                => $event ?        ( $event->description                ?? '' )         : '',
     'has_groups'                 => $event ? (int)    $event->has_groups                                 : 1,
     'has_presale'                => $event ? (int)    $event->has_presale                                : 1,
-    'allow_duplicate_email'      => $event ? (int)    $event->allow_duplicate_email                      : 1,
+    'allow_duplicate_email'      => $event ? (int)    $event->allow_duplicate_email                      : 0,
     'registration_deadline_date' => $event ?        ( $event->registration_deadline_date ?? '' )         : '',
     'registration_deadline_time' => $event ?   substr( $event->registration_deadline_time ?? '', 0, 5 )  : '',
     'presale_date'               => $event ?        ( $event->presale_date               ?? '' )         : '',
@@ -78,6 +78,7 @@ $v = (object) array(
                             <input type="date" id="ee-event-date" name="event_date"
                                    required value="<?php echo esc_attr( $v->event_date ); ?>">
                             <span class="ee-field-hint"></span>
+                            <span id="ee-warn-event-date" style="display:none; color:#cc6600; font-style:italic; margin-left:8px;"></span>
                         </td>
                     </tr>
                     <tr>
@@ -150,6 +151,7 @@ $v = (object) array(
                                    value="<?php echo esc_attr( $v->registration_deadline_date ); ?>">
                             <input type="time" id="ee-deadline-time" name="registration_deadline_time"
                                    value="<?php echo esc_attr( $v->registration_deadline_time ); ?>">
+                            <span id="ee-warn-deadline" style="display:none; color:#cc6600; font-style:italic; margin-left:8px;"></span>
                             <p class="description">Optional. Nach diesem Zeitpunkt ist keine Anmeldung mehr möglich. Uhrzeit leer = 23:59.</p>
                         </td>
                     </tr>
@@ -167,10 +169,10 @@ $v = (object) array(
                 <div id="ee-groups-error" class="notice notice-error" style="display:none; margin:12px 0 0">
                     <p></p>
                 </div>
-                <table class="wp-list-table widefat fixed" id="ee-groups-table">
+                <table class="wp-list-table widefat" id="ee-groups-table">
                     <thead>
                         <tr>
-                            <th style="width:90px">Gruppe Nr. <span class="required">*</span></th>
+                            <th style="width:90px">Sortierung <span class="required">*</span></th>
                             <th>Beschreibung</th>
                             <th style="width:150px">Max. Teilnehmer <span class="required">*</span></th>
                             <th style="width:100px">Aktion</th>
@@ -187,7 +189,7 @@ $v = (object) array(
                                 </td>
                                 <td><input type="text" name="groups[<?php echo $idx; ?>][description]"
                                            value="<?php echo esc_attr( $group->description ?? '' ); ?>"
-                                           class="regular-text" style="width:100%"></td>
+                                           style="width:100%"></td>
                                 <td><input type="number" name="groups[<?php echo $idx; ?>][max_tickets]"
                                            value="<?php echo (int) $group->max_tickets; ?>"
                                            min="1" class="small-text" required></td>
@@ -218,6 +220,7 @@ $v = (object) array(
                             <input type="date" id="ee-presale-date" name="presale_date"
                                    required value="<?php echo esc_attr( $v->presale_date ); ?>">
                             <span class="ee-field-hint"></span>
+                            <span id="ee-warn-presale" style="display:none; color:#cc6600; font-style:italic; margin-left:8px;"></span>
                         </td>
                     </tr>
                     <tr>
@@ -238,7 +241,7 @@ $v = (object) array(
                     <tr>
                         <th scope="row"><label for="ee-soldout-msg">Nachricht wenn ausverkauft</label></th>
                         <td>
-                            <textarea id="ee-soldout-msg" name="sold_out_message" class="large-text" rows="3"><?php echo esc_textarea( $v->sold_out_message ?: 'Leider sind alle Tickets ausverkauft. Schade, vielleicht beim nächsten Mal.' ); ?></textarea>
+                            <textarea id="ee-soldout-msg" name="sold_out_message" class="large-text" rows="3"><?php echo esc_textarea( $v->sold_out_message ?: 'Leider sind alle Tickets ausverkauft.' ); ?></textarea>
                         </td>
                     </tr>
                 </table>
@@ -254,35 +257,47 @@ $v = (object) array(
             <div id="ee-tab-email" class="ee-tab-panel" style="display:none">
                 <table class="form-table ee-compact" role="presentation">
                     <tr>
-                        <th scope="row"><label for="ee-admin-email">Admin E-Mail (Empfänger)</label></th>
+                        <th scope="row"><label for="ee-admin-email">Admin E-Mail (Empfänger) <span class="required">*</span></label></th>
                         <td>
                             <input type="email" id="ee-admin-email" name="admin_email" class="regular-text"
+                                   required
+                                   placeholder="deine@email.com"
                                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                                    title="Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch)"
                                    value="<?php echo esc_attr( $v->admin_email ); ?>">
+                            <span class="ee-field-hint"></span>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="ee-sender-name">Absender Name</label></th>
+                        <th scope="row"><label for="ee-sender-name">Absender Name <span class="required">*</span></label></th>
                         <td>
                             <input type="text" id="ee-sender-name" name="sender_name" class="regular-text"
+                                   required
+                                   placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>"
                                    value="<?php echo esc_attr( $v->sender_name ); ?>">
+                            <span class="ee-field-hint"></span>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="ee-sender-email">Absender E-Mail</label></th>
+                        <th scope="row"><label for="ee-sender-email">Absender E-Mail <span class="required">*</span></label></th>
                         <td>
                             <input type="email" id="ee-sender-email" name="sender_email" class="regular-text"
+                                   required
+                                   placeholder="<?php echo esc_attr( 'noreply@' . wp_parse_url( home_url(), PHP_URL_HOST ) ); ?>"
                                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                                    title="Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch)"
                                    value="<?php echo esc_attr( $v->sender_email ); ?>">
+                            <span class="ee-field-hint"></span>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="ee-conf-subject">Betreff Bestätigungs-E-Mail</label></th>
+                        <th scope="row"><label for="ee-conf-subject">Betreff Bestätigungs-E-Mail <span class="required">*</span></label></th>
                         <td>
                             <input type="text" id="ee-conf-subject" name="confirmation_subject" class="regular-text"
+                                   required
+                                   placeholder="Anmeldung {event_titel}"
                                    value="<?php echo esc_attr( $v->confirmation_subject ); ?>">
+                            <span class="ee-field-hint"></span>
                         </td>
                     </tr>
                     <tr>

@@ -69,7 +69,7 @@ foreach ( $errors as $err ) {
                 $sel      = selected( $form_data['group_id'] ?? '', $group->id, false );
                 $disabled = ( $group->remaining === 0 ) ? ' disabled' : '';
 
-                $group_label = $group->group_number . ( ! empty( $group->description ) ? ' ' . $group->description : '' );
+                $group_label = ! empty( $group->description ) ? $group->description : '—';
                 if ( (int) $group->remaining === 0 ) {
                     $label = 'Ausverkauft - ' . $group_label;
                 } elseif ( $group->remaining <= 10 ) {
