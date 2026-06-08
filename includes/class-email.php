@@ -7,18 +7,17 @@ class Easy_Event_Email {
      * Send confirmation email to the participant.
      */
     public static function send_confirmation( $registration, $event, $group ) {
-        if ( empty( $event->sender_email ) || empty( $event->confirmation_subject ) ) {
-            error_log( 'Easy Event: send_confirmation() übersprungen – Absender-E-Mail oder Betreff fehlt (Event-ID ' . ( $event->id ?? '?' ) . ').' );
+        if ( empty( $event->confirmation_subject ) ) {
             return false;
         }
 
         $to      = $registration->email;
         $subject = self::replace_placeholders( $event->confirmation_subject, $registration, $event, $group );
         $body    = self::replace_placeholders( $event->confirmation_text, $registration, $event, $group );
-        $headers = array(
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>',
-        );
+        $headers = array( 'Content-Type: text/html; charset=UTF-8' );
+        if ( ! empty( $event->sender_email ) ) {
+            $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
+        }
 
         return wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers );
     }
@@ -37,10 +36,10 @@ class Easy_Event_Email {
         $to      = $event->admin_email;
         $subject = 'Neue Anmeldung: ' . $event->title;
         $body    = self::replace_placeholders( $body_raw, $registration, $event, $group );
-        $headers = array(
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>',
-        );
+        $headers = array( 'Content-Type: text/html; charset=UTF-8' );
+        if ( ! empty( $event->sender_email ) ) {
+            $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
+        }
 
         return wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers );
     }
