@@ -51,11 +51,15 @@
                         <td><?php echo esc_html( date_i18n( 'd.m.Y', strtotime( $event->event_date ) ) ); ?></td>
                         <td>
                             <?php
-                            echo esc_html(
-                                date_i18n( 'd.m.Y', strtotime( $event->presale_date ) )
-                                . ' ' .
-                                substr( $event->presale_time, 0, 5 ) . ' Uhr'
-                            );
+                            if ( $event->has_presale && ! empty( $event->presale_date ) ) {
+                                echo esc_html(
+                                    date_i18n( 'd.m.Y', strtotime( $event->presale_date ) )
+                                    . ' ' .
+                                    substr( $event->presale_time, 0, 5 ) . ' Uhr'
+                                );
+                            } else {
+                                echo '&ndash;';
+                            }
                             ?>
                         </td>
                         <td><?php echo (int) $group_count; ?></td>
@@ -71,15 +75,18 @@
                             <a href="<?php echo esc_url( $edit_url ); ?>">Bearbeiten</a>
                             &nbsp;|&nbsp;
                             <?php
-                            $confirm_msg  = 'Event «' . esc_js( $event->title ) . '» wirklich unwiderruflich löschen?' . "\n\n";
-                            $confirm_msg .= 'Folgendes wird vollständig und dauerhaft entfernt:' . "\n";
-                            $confirm_msg .= '  • ' . $group_count . ' Gruppe(n)' . "\n";
-                            $confirm_msg .= '  • ' . $reg_count   . ' Anmeldung(en)' . "\n";
-                            $confirm_msg .= '  • Alle E-Mail- und Vorverkaufseinstellungen' . "\n\n";
-                            $confirm_msg .= 'Diese Aktion kann nicht rückgängig gemacht werden.';
+                            $confirm_msg = sprintf(
+                                "Event «%s» wirklich unwiderruflich löschen?\n\n" .
+                                "Folgendes wird vollständig und dauerhaft entfernt:\n" .
+                                "  • %d Gruppe(n)\n" .
+                                "  • %d Anmeldung(en)\n" .
+                                "  • Alle E-Mail- und Vorverkaufseinstellungen\n\n" .
+                                "Diese Aktion kann nicht rückgängig gemacht werden.",
+                                $event->title, $group_count, $reg_count
+                            );
                             ?>
                             <a href="<?php echo esc_url( $delete_url ); ?>"
-                               onclick="return confirm('<?php echo $confirm_msg; ?>');"
+                               onclick="return confirm(<?php echo esc_attr( json_encode( $confirm_msg ) ); ?>);"
                                style="color:#b32d2e">Löschen</a>
                         </td>
                     </tr>
@@ -87,4 +94,15 @@
             <?php endif; ?>
         </tbody>
     </table>
+
+    <?php if ( isset( $total ) && $total > $per_page ) :
+        echo paginate_links( array(
+            'base'      => add_query_arg( 'paged', '%#%', admin_url( 'admin.php?page=easy-event' ) ),
+            'format'    => '',
+            'current'   => $paged,
+            'total'     => ceil( $total / $per_page ),
+            'prev_text' => '&laquo;',
+            'next_text' => '&raquo;',
+        ) );
+    endif; ?>
 </div>

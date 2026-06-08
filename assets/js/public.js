@@ -87,6 +87,7 @@ jQuery(function ($) {
 
     function validateGroup() {
         var $f = $('#ee-f-group');
+        if (!$f.length) return true; // kein Gruppen-Select vorhanden (has_groups = 0)
         if (!$f.val()) {
             showError($f, 'Bitte eine Gruppe auswählen.');
             return false;
