@@ -26,6 +26,8 @@ build/
 # Environment / secrets
 .env
 .env.*
+CODE-REVIEW.md
+
 
 # PHP
 .phpunit.result.cache

@@ -187,7 +187,7 @@ $v = (object) array(
                                 </td>
                                 <td><input type="text" name="groups[<?php echo $idx; ?>][description]"
                                            value="<?php echo esc_attr( $group->description ?? '' ); ?>"
-                                           class="regular-text"></td>
+                                           class="regular-text" style="width:100%"></td>
                                 <td><input type="number" name="groups[<?php echo $idx; ?>][max_tickets]"
                                            value="<?php echo (int) $group->max_tickets; ?>"
                                            min="1" class="small-text" required></td>
@@ -295,7 +295,7 @@ $v = (object) array(
                             <p class="description">
                                 Platzhalter:
                                 <?php
-                                foreach ( ['{name}','{email}','{tickets}','{gruppe_nr}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) {
+                                foreach ( ['{name}','{email}','{personen}','{gruppe_nr}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) {
                                     echo Easy_Event_Admin::ee_ph( $ph ) . ' ';
                                 }
                                 ?>

@@ -16,11 +16,11 @@ class Easy_Event_Email {
         $subject = self::replace_placeholders( $event->confirmation_subject, $registration, $event, $group );
         $body    = self::replace_placeholders( $event->confirmation_text, $registration, $event, $group );
         $headers = array(
-            'Content-Type: text/plain; charset=UTF-8',
+            'Content-Type: text/html; charset=UTF-8',
             'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>',
         );
 
-        return wp_mail( $to, $subject, $body, $headers );
+        return wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers );
     }
 
     /**
@@ -39,7 +39,7 @@ class Easy_Event_Email {
         $body   .= 'Name:            ' . $registration->name    . "\n";
         $body   .= 'E-Mail:          ' . $registration->email   . "\n";
         $body   .= 'Gruppe:          ' . $gruppe_info           . "\n";
-        $body   .= 'Anzahl Tickets:  ' . $registration->tickets . "\n";
+        $body   .= 'Anzahl Personen: ' . $registration->tickets . "\n";
         $body   .= 'Anmeldedatum:    ' . date_i18n( 'd.m.Y H:i', strtotime( $registration->created_at ) ) . "\n";
 
         $headers = array( 'Content-Type: text/plain; charset=UTF-8' );
@@ -70,19 +70,19 @@ class Easy_Event_Email {
         $body   .= str_repeat( '-', 40 ) . "\n\n";
         $body   .= self::replace_placeholders( $event->confirmation_text ?: '(kein Bestätigungstext definiert)', $fake_reg, $event, $fake_group );
 
-        $headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+        $headers = array( 'Content-Type: text/html; charset=UTF-8' );
         if ( ! empty( $event->sender_email ) ) {
             $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
         }
 
-        return wp_mail( $to, $subject, $body, $headers );
+        return wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers );
     }
 
     /**
      * Replace all placeholders in a text string.
      *
      * Available placeholders:
-     *   {name}, {email}, {tickets},
+     *   {name}, {email}, {personen},
      *   {gruppe_nr}, {gruppe_beschreibung},
      *   {event_titel}, {event_datum}
      */
@@ -94,7 +94,7 @@ class Easy_Event_Email {
         $map = array(
             '{name}'                => $registration->name    ?? '',
             '{email}'               => $registration->email   ?? '',
-            '{tickets}'             => $registration->tickets ?? '',
+            '{personen}'            => $registration->tickets ?? '',
             '{gruppe_nr}'           => $group ? ( $group->group_number ?? '' ) : '',
             '{gruppe_beschreibung}' => $group ? ( $group->description  ?? '' ) : '',
             '{event_titel}'         => $event->title          ?? '',

@@ -69,13 +69,13 @@ foreach ( $errors as $err ) {
                 $sel      = selected( $form_data['group_id'] ?? '', $group->id, false );
                 $disabled = ( $group->remaining === 0 ) ? ' disabled' : '';
 
-                $desc_suffix = ! empty( $group->description ) ? ' – ' . $group->description : '';
+                $desc_part = ! empty( $group->description ) ? ' ' . $group->description : '';
                 if ( $group->remaining === 0 ) {
-                    $label = 'Ausverkauft – Gruppe ' . $group->group_number . $desc_suffix;
-                } elseif ( $group->remaining <= Easy_Event_Shortcode::MAX_TICKETS ) {
-                    $label = 'Noch ' . $group->remaining . ' Ticket(s) verfügbar – Gruppe ' . $group->group_number . $desc_suffix;
+                    $label = $group->group_number . ' Ausverkauft' . $desc_part;
+                } elseif ( $group->remaining <= 10 ) {
+                    $label = $group->group_number . ' noch ' . $group->remaining . ' verfügbar' . $desc_part;
                 } else {
-                    $label = 'Gruppe ' . $group->group_number . $desc_suffix;
+                    $label = $group->group_number . $desc_part;
                 }
                 ?>
                 <option value="<?php echo (int) $group->id; ?>"<?php echo $sel . $disabled; ?>>
@@ -92,7 +92,7 @@ foreach ( $errors as $err ) {
     <?php endif; ?>
 
     <div class="easy-event-field">
-        <label for="ee-f-tickets"><?php _e( 'Anzahl Tickets', 'easy-event' ); ?> <span class="required">*</span></label>
+        <label for="ee-f-tickets"><?php _e( 'Anzahl Personen', 'easy-event' ); ?> <span class="required">*</span></label>
         <select id="ee-f-tickets" name="tickets">
             <?php
             $sel_tickets = absint( $form_data['tickets'] ?? 1 );

@@ -275,7 +275,7 @@ jQuery(function ($) {
         var row = '<tr class="ee-group-row">' +
             '<td><input type="hidden" name="groups[' + i + '][id]" value="0">' +
             '<input type="number" name="groups[' + i + '][group_number]" value="' + (i + 1) + '" min="1" class="small-text" required></td>' +
-            '<td><input type="text" name="groups[' + i + '][description]" class="regular-text"></td>' +
+            '<td><input type="text" name="groups[' + i + '][description]" class="regular-text" style="width:100%"></td>' +
             '<td><input type="number" name="groups[' + i + '][max_tickets]" value="10" min="1" class="small-text" required></td>' +
             '<td><button type="button" class="button ee-remove-group">Entfernen</button></td>' +
             '</tr>';

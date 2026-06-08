@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
 Tested with PHP: 8.3.5
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,6 +51,13 @@ Das Plugin verwendet MySQL-Transaktionen mit Row-Level-Locking. Überverkäufe s
 Das ist pro Event konfigurierbar. In den Event-Einstellungen (Tab „Event-Details") gibt es eine entsprechende Checkbox.
 
 == Changelog ==
+
+= 1.2.1 =
+* Verbesserung: Beschreibungsfeld bei Gruppen füllt jetzt die volle Spaltenbreite
+* Fix: Zeilenumbrüche in Bestätigungs-E-Mails werden korrekt dargestellt (HTML-E-Mail mit nl2br)
+* Umbenennung: «Anzahl Tickets» → «Anzahl Personen» (Formular, Admin-Benachrichtigung)
+* Umbenennung: E-Mail-Platzhalter `{tickets}` → `{personen}`
+* Verbesserung: Gruppen-Dropdown zeigt `<Nr> <Beschreibung>` ohne «Gruppe»-Prefix; Verfügbarkeit ab ≤ 10
 
 = 1.2.0 =
 * Änderung: Gruppen haben kein Startzeit- und kein Gruppenleiter-Feld mehr, sondern ein freies Beschreibungsfeld
