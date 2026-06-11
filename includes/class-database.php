@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Easy_Event_Database {
 
     const DB_VERSION_OPTION = 'easy_event_db_version';
-    const DB_VERSION        = '1.5';
+    const DB_VERSION        = '1.6';
 
     // ------------------------------------------------------------------
     // Installation & Updates
@@ -108,7 +108,6 @@ class Easy_Event_Database {
             presale_time time DEFAULT NULL,
             sold_out_message text,
             admin_email varchar(255) DEFAULT '',
-            sender_name varchar(255) DEFAULT '',
             sender_email varchar(255) DEFAULT '',
             confirmation_subject varchar(255) DEFAULT '',
             confirmation_text longtext,
@@ -172,7 +171,7 @@ class Easy_Event_Database {
             $limit  = $wpdb->prepare( ' LIMIT %d OFFSET %d', $per_page, $offset );
         }
         return $wpdb->get_results(
-            "SELECT * FROM {$wpdb->prefix}easy_event_events ORDER BY event_date DESC" . $limit
+            "SELECT * FROM {$wpdb->prefix}easy_event_events ORDER BY id DESC" . $limit
         );
     }
 
@@ -202,14 +201,13 @@ class Easy_Event_Database {
             'presale_time'               => $has_presale && ! empty( $data['presale_time'] ) ? sanitize_text_field( $data['presale_time'] ) : null,
             'sold_out_message'           => sanitize_textarea_field( $data['sold_out_message'] ?? '' ),
             'admin_email'                => is_email( $data['admin_email'] ?? '' ) ? sanitize_email( $data['admin_email'] ) : '',
-            'sender_name'                => sanitize_text_field( $data['sender_name'] ?? '' ),
             'sender_email'               => is_email( $data['sender_email'] ?? '' ) ? sanitize_email( $data['sender_email'] ) : '',
             'confirmation_subject'       => sanitize_text_field( $data['confirmation_subject'] ?? '' ),
             'confirmation_text'          => sanitize_textarea_field( $data['confirmation_text'] ?? '' ),
             'admin_notification_text'    => sanitize_textarea_field( $data['admin_notification_text'] ?? '' ),
             'allow_duplicate_email'      => ! empty( $data['allow_duplicate_email'] ) ? 1 : 0,
         );
-        $formats = array( '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );
+        $formats = array( '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' );
 
         $id = absint( $data['id'] ?? 0 );
         if ( $id ) {
@@ -423,18 +421,6 @@ class Easy_Event_Database {
         return (int) $wpdb->get_var(
             "SELECT COUNT(*) FROM {$wpdb->prefix}easy_event_registrations"
         );
-    }
-
-    /**
-     * Prüft ob eine E-Mail-Adresse für ein Event bereits registriert ist.
-     */
-    public static function is_email_registered( $event_id, $email ) {
-        global $wpdb;
-        return (bool) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}easy_event_registrations WHERE event_id = %d AND email = %s",
-            absint( $event_id ),
-            sanitize_email( $email )
-        ) );
     }
 
     public static function get_registration( $id ) {

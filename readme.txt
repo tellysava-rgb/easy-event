@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
 Tested with PHP: 8.3.5
-Stable tag: 1.2.7
+Stable tag: 1.2.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -52,7 +52,7 @@ Das ist pro Event konfigurierbar. In den Event-Einstellungen (Tab „Event-Detai
 
 == Changelog ==
 
-= 1.2.7 =
+= 1.2.8 =
 * Fix: Bestätigungs-E-Mail an Anmelder wird jetzt immer gesendet (Absender-Header optional)
 
 = 1.2.6 =

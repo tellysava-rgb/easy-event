@@ -16,7 +16,10 @@ class Easy_Event_Email {
         $body    = self::replace_placeholders( $event->confirmation_text, $registration, $event, $group );
         $headers = array( 'Content-Type: text/html; charset=UTF-8' );
         if ( ! empty( $event->sender_email ) ) {
-            $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
+            $from_name  = get_bloginfo( 'name' );
+            $safe_name  = str_replace( array( "\r", "\n" ), '', sanitize_text_field( $from_name ) );
+            $safe_email = sanitize_email( $event->sender_email );
+            $headers[]  = 'From: ' . $safe_name . ' <' . $safe_email . '>';
         }
 
         return wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers );
@@ -38,7 +41,10 @@ class Easy_Event_Email {
         $body    = self::replace_placeholders( $body_raw, $registration, $event, $group );
         $headers = array( 'Content-Type: text/html; charset=UTF-8' );
         if ( ! empty( $event->sender_email ) ) {
-            $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
+            $from_name  = get_bloginfo( 'name' );
+            $safe_name  = str_replace( array( "\r", "\n" ), '', sanitize_text_field( $from_name ) );
+            $safe_email = sanitize_email( $event->sender_email );
+            $headers[]  = 'From: ' . $safe_name . ' <' . $safe_email . '>';
         }
 
         return wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers );
@@ -66,7 +72,10 @@ class Easy_Event_Email {
 
         $headers = array( 'Content-Type: text/html; charset=UTF-8' );
         if ( ! empty( $event->sender_email ) ) {
-            $headers[] = 'From: ' . str_replace( array( "\r", "\n" ), '', $event->sender_name ) . ' <' . $event->sender_email . '>';
+            $from_name  = get_bloginfo( 'name' );
+            $safe_name  = str_replace( array( "\r", "\n" ), '', sanitize_text_field( $from_name ) );
+            $safe_email = sanitize_email( $event->sender_email );
+            $headers[]  = 'From: ' . $safe_name . ' <' . $safe_email . '>';
         }
 
         return wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers );

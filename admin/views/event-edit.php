@@ -16,7 +16,6 @@ $v = (object) array(
     'presale_message'            => $event ?        ( $event->presale_message            ?? '' )         : '',
     'sold_out_message'           => $event ?        ( $event->sold_out_message           ?? '' )         : '',
     'admin_email'                => $event ?        ( $event->admin_email                ?? '' )         : '',
-    'sender_name'                => $event ?        ( $event->sender_name                ?? '' )         : '',
     'sender_email'               => $event ?        ( $event->sender_email               ?? '' )         : '',
     'confirmation_subject'       => $event ?        ( $event->confirmation_subject       ?? '' )         : '',
     'confirmation_text'          => $event ?        ( $event->confirmation_text          ?? '' )         : '',
@@ -258,28 +257,6 @@ $v = (object) array(
             <div id="ee-tab-email" class="ee-tab-panel" style="display:none">
                 <table class="form-table ee-compact" role="presentation">
                     <tr>
-                        <th scope="row"><label for="ee-admin-email">Admin E-Mail (Empfänger) <span class="required">*</span></label></th>
-                        <td>
-                            <input type="email" id="ee-admin-email" name="admin_email" class="regular-text"
-                                   required
-                                   placeholder="deine@email.com"
-                                   pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
-                                   title="Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch)"
-                                   value="<?php echo esc_attr( $v->admin_email ); ?>">
-                            <span class="ee-field-hint"></span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="ee-sender-name">Absender Name <span class="required">*</span></label></th>
-                        <td>
-                            <input type="text" id="ee-sender-name" name="sender_name" class="regular-text"
-                                   required
-                                   placeholder="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>"
-                                   value="<?php echo esc_attr( $v->sender_name ); ?>">
-                            <span class="ee-field-hint"></span>
-                        </td>
-                    </tr>
-                    <tr>
                         <th scope="row"><label for="ee-sender-email">Absender E-Mail <span class="required">*</span></label></th>
                         <td>
                             <input type="email" id="ee-sender-email" name="sender_email" class="regular-text"
@@ -288,7 +265,7 @@ $v = (object) array(
                                    pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
                                    title="Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch)"
                                    value="<?php echo esc_attr( $v->sender_email ); ?>">
-                            <span class="ee-field-hint"></span>
+                            <p class="description">Diese E-Mail wird als Absender verwendet. Sie sollte mit der Domain übereinstimmen, ausser du nutzt SMTP mit einer anderen Absenderadresse.</p>
                         </td>
                     </tr>
                     <tr>
@@ -296,7 +273,7 @@ $v = (object) array(
                         <td>
                             <input type="text" id="ee-conf-subject" name="confirmation_subject" class="regular-text"
                                    required
-                                   placeholder="Anmeldung {event_titel}"
+                                   placeholder="Deine Anmeldung {event_titel}"
                                    value="<?php echo esc_attr( $v->confirmation_subject ); ?>">
                             <span class="ee-field-hint"></span>
                         </td>
@@ -308,31 +285,29 @@ $v = (object) array(
                             $default_conf_text = "Hallo {name}\n\nDu hast dich gerade für {event_titel} angemeldet\n\nSuper bist du dabei.\nWir sehen uns.";
                             ?>
                             <textarea id="ee-conf-text" name="confirmation_text" class="large-text" rows="8"><?php echo esc_textarea( $v->confirmation_text ?: $default_conf_text ); ?></textarea>
-                            <p class="description">
-                                Platzhalter:
-                                <?php
-                                foreach ( ['{name}','{email}','{anzahl_personen}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) {
-                                    echo Easy_Event_Admin::ee_ph( $ph ) . ' ';
-                                }
-                                ?>
-                            </p>
+                            <p class="description">Platzhalter: <?php foreach ( ['{name}','{email}','{anzahl_personen}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) { echo Easy_Event_Admin::ee_ph( $ph ) . ' '; } ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="ee-admin-notif-text">Text Bestätigung an Admin E-Mail</label></th>
+                        <th scope="row"><label for="ee-admin-email">Empfänger E-Mail Anmeldung <span class="required">*</span></label></th>
+                        <td>
+                            <input type="email" id="ee-admin-email" name="admin_email" class="regular-text"
+                                   required
+                                   placeholder="deine@email.com"
+                                   pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
+                                   title="Bitte eine gültige E-Mail-Adresse eingeben (z.B. name@beispiel.ch)"
+                                   value="<?php echo esc_attr( $v->admin_email ); ?>">
+                            <p class="description">An diese E-Mail werden die Anmeldungen gesendet.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="ee-admin-notif-text">Text Bestätigung an Empfänger E-Mail Anmeldung</label></th>
                         <td>
                             <?php
                             $default_admin_text = "Hallo\n\nEs wurde gerade eine neue Anmeldung registriert für {event_titel}.\n\nName: {name}\nEmail: {email}\nAnzahl Tickets: {anzahl_personen}\nGruppe: {gruppe_beschreibung}";
                             ?>
                             <textarea id="ee-admin-notif-text" name="admin_notification_text" class="large-text" rows="8"><?php echo esc_textarea( $v->admin_notification_text ?: $default_admin_text ); ?></textarea>
-                            <p class="description">
-                                Platzhalter:
-                                <?php
-                                foreach ( ['{name}','{email}','{anzahl_personen}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) {
-                                    echo Easy_Event_Admin::ee_ph( $ph ) . ' ';
-                                }
-                                ?>
-                            </p>
+                            <p class="description">Platzhalter: <?php foreach ( ['{name}','{email}','{anzahl_personen}','{gruppe_beschreibung}','{event_titel}','{event_datum}'] as $ph ) { echo Easy_Event_Admin::ee_ph( $ph ) . ' '; } ?></p>
                         </td>
                     </tr>
                 </table>

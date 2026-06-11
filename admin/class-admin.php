@@ -173,7 +173,6 @@ class Easy_Event_Admin {
             'presale_message'             => $_POST['presale_message']                    ?? '',
             'sold_out_message'            => $_POST['sold_out_message']                   ?? '',
             'admin_email'                 => $_POST['admin_email']                        ?? '',
-            'sender_name'                 => $_POST['sender_name']                        ?? '',
             'sender_email'                => $_POST['sender_email']                       ?? '',
             'confirmation_subject'        => $_POST['confirmation_subject']               ?? '',
             'confirmation_text'           => $_POST['confirmation_text']                  ?? '',
@@ -196,9 +195,7 @@ class Easy_Event_Admin {
                 $required_errors[] = 'Tab «Vorverkauf»: Uhrzeit Vorverkauf ist erforderlich.';
         }
         if ( empty( trim( $data['admin_email'] ) ) )
-            $required_errors[] = 'Tab «E-Mail»: Admin E-Mail ist erforderlich.';
-        if ( empty( trim( $data['sender_name'] ) ) )
-            $required_errors[] = 'Tab «E-Mail»: Absender Name ist erforderlich.';
+            $required_errors[] = 'Tab «E-Mail»: Empfänger E-Mail Anmeldung ist erforderlich.';
         if ( empty( trim( $data['sender_email'] ) ) )
             $required_errors[] = 'Tab «E-Mail»: Absender E-Mail ist erforderlich.';
         if ( empty( trim( $data['confirmation_subject'] ) ) )
@@ -210,7 +207,7 @@ class Easy_Event_Admin {
 
         // E-Mail-Felder validieren: warnen wenn ausgefüllt aber ungültig
         if ( ! empty( $data['admin_email'] ) && ! is_email( $data['admin_email'] ) ) {
-            $warnings[] = 'Admin-E-Mail «' . esc_html( $data['admin_email'] ) . '» ist ungültig und wurde nicht gespeichert.';
+            $warnings[] = 'Empfänger-E-Mail Anmeldung «' . esc_html( $data['admin_email'] ) . '» ist ungültig und wurde nicht gespeichert.';
         }
         if ( ! empty( $data['sender_email'] ) && ! is_email( $data['sender_email'] ) ) {
             $warnings[] = 'Absender-E-Mail «' . esc_html( $data['sender_email'] ) . '» ist ungültig und wurde nicht gespeichert.';
@@ -268,7 +265,6 @@ class Easy_Event_Admin {
             'presale_message'            => sanitize_textarea_field( $_POST['presale_message']          ?? '' ),
             'sold_out_message'           => sanitize_textarea_field( $_POST['sold_out_message']         ?? '' ),
             'admin_email'                => sanitize_email( $_POST['admin_email']               ?? '' ),
-            'sender_name'                => sanitize_text_field( $_POST['sender_name']              ?? '' ),
             'sender_email'               => sanitize_email( $_POST['sender_email']              ?? '' ),
             'confirmation_subject'       => sanitize_text_field( $_POST['confirmation_subject']        ?? '' ),
             'confirmation_text'          => sanitize_textarea_field( $_POST['confirmation_text']           ?? '' ),
