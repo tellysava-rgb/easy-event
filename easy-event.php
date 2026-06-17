@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Easy Event
  * Description: Einfaches Event-Anmeldesystem mit Vorverkauf, Gruppen und Ticketkontingenten.
- * Version: 1.2.8
+ * Version: 1.3.0
  * Author: Easy Event
  * Text Domain: easy-event
  * Requires at least: 5.8
@@ -12,7 +12,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'EASY_EVENT_VERSION', '1.2.8' );
+define( 'EASY_EVENT_VERSION', '1.3.0' );
 define( 'EASY_EVENT_PATH', plugin_dir_path( __FILE__ ) );
 define( 'EASY_EVENT_URL', plugin_dir_url( __FILE__ ) );
 
