@@ -29,6 +29,17 @@ easy-event/                        ← Git-Repo-Root, direkt verbunden mit GitHu
 
 GitHub-Remote: https://github.com/tellysava-rgb/easy-event
 
+## Entwicklungsregeln
+
+**WordPress Best Practices** — Alle Anpassungen müssen den WordPress-Coding-Standards folgen, um Kompatibilität mit beliebigen Themes sicherzustellen:
+- Styles nie global, sondern gezielt über `wp_enqueue_style()` laden
+- Kein direktes Ausgeben von HTML ausserhalb von Template-Dateien (`views/`)
+- Hooks (`add_action`, `add_filter`) statt direkter Funktionsaufrufe
+- Formularverarbeitung nur über Nonces und Capability-Checks
+- Datenbankzugriffe ausschliesslich über `$wpdb` mit vorbereiteten Statements
+
+**Sauberer Code** — Wird etwas angepasst, das in ähnlicher Form bereits existiert, muss der alte Code vollständig entfernt werden. Kein toter Code, keine auskommentierten Altversionen, keine doppelten Implementierungen.
+
 ## Git-Workflow
 
 ```bash
