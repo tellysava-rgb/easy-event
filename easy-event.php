@@ -7,6 +7,7 @@
  * Text Domain: easy-event
  * Requires at least: 5.8
  * Requires PHP: 7.4
+ * Update URI: https://github.com/tellysava-rgb/easy-event
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -15,11 +16,23 @@ define( 'EASY_EVENT_VERSION', '1.2.8' );
 define( 'EASY_EVENT_PATH', plugin_dir_path( __FILE__ ) );
 define( 'EASY_EVENT_URL', plugin_dir_url( __FILE__ ) );
 
+require_once EASY_EVENT_PATH . 'vendor/autoload.php';
 require_once EASY_EVENT_PATH . 'includes/class-database.php';
 require_once EASY_EVENT_PATH . 'includes/class-email.php';
-require_once EASY_EVENT_PATH . 'includes/class-updater.php';
 require_once EASY_EVENT_PATH . 'admin/class-admin.php';
 require_once EASY_EVENT_PATH . 'public/class-shortcode.php';
+
+add_action( 'init', static function (): void {
+    if ( ! class_exists( 'YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
+        return;
+    }
+    $updateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/tellysava-rgb/easy-event/',
+        __FILE__,
+        'easy-event'
+    );
+    $updateChecker->getVcsApi()->enableReleaseAssets();
+} );
 
 register_activation_hook( __FILE__, array( 'Easy_Event_Database', 'create_tables' ) );
 
@@ -29,9 +42,6 @@ function easy_event_init() {
     load_plugin_textdomain( 'easy-event', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 
     Easy_Event_Database::maybe_upgrade();
-
-    // GitHub-Updates: «dein-github-user» durch deinen GitHub-Benutzernamen ersetzen
-    new Easy_Event_Updater( __FILE__, 'tellysava-rgb', 'easy-event' );
 
     if ( is_admin() ) {
         Easy_Event_Admin::init();
