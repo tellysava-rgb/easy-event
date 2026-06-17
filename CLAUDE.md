@@ -31,12 +31,16 @@ GitHub-Remote: https://github.com/tellysava-rgb/easy-event
 
 ## Entwicklungsregeln
 
+**Mindestanforderungen** — WordPress 5.8+, PHP 7.4+. Keine APIs verwenden, die erst in neueren WP-Versionen eingeführt wurden.
+
 **WordPress Best Practices** — Alle Anpassungen müssen den WordPress-Coding-Standards folgen, um Kompatibilität mit beliebigen Themes sicherzustellen:
 - Styles nie global, sondern gezielt über `wp_enqueue_style()` laden
 - Kein direktes Ausgeben von HTML ausserhalb von Template-Dateien (`views/`)
 - Hooks (`add_action`, `add_filter`) statt direkter Funktionsaufrufe
 - Formularverarbeitung nur über Nonces und Capability-Checks
 - Datenbankzugriffe ausschliesslich über `$wpdb` mit vorbereiteten Statements
+- Alle Eingaben mit `sanitize_text_field()`, `sanitize_email()` o.ä. bereinigen
+- Alle Ausgaben mit `esc_html()`, `esc_attr()`, `esc_url()` o.ä. escapen
 
 **Sauberer Code** — Wird etwas angepasst, das in ähnlicher Form bereits existiert, muss der alte Code vollständig entfernt werden. Kein toter Code, keine auskommentierten Altversionen, keine doppelten Implementierungen.
 
@@ -63,6 +67,11 @@ Schema: `MAJOR.MINOR.PATCH`
 Version immer an **drei** Stellen anpassen:
 1. `easy-event.php` — Header `* Version:` und `define('EASY_EVENT_VERSION', ...)`
 2. `readme.txt` — `Stable tag:` und neuer Changelog-Eintrag unter `== Changelog ==`
+
+**Reihenfolge vor dem Release:**
+1. Versionsnummern anpassen (beide Dateien)
+2. Commit und Push auf `main`
+3. Erst danach Tag erstellen und pushen (siehe GitHub-Release)
 
 ## GitHub-Release — PFLICHT für Plugin-Updates
 
@@ -106,6 +115,13 @@ Verfügbare Platzhalter in Bestätigungs- und Admin-E-Mails:
 `{vorname}` `{nachname}` `{email}` `{anzahl_personen}` `{gruppe_beschreibung}` `{event_name}` `{event_datum}`
 
 Admin-Benachrichtigungstext ist pro Event im E-Mail-Tab konfigurierbar.
+
+## Testumgebung
+
+Änderungen werden auf einer lokalen WordPress-Instanz getestet. Vor einem Commit sicherstellen, dass:
+- Anmeldeformular (Frontend) funktioniert
+- Admin-Bereich (Event-Liste, Formular, Anmeldungen) funktioniert
+- Keine PHP-Fehler oder Warnings im Debug-Log erscheinen
 
 ## Shortcode
 
